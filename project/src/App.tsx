@@ -1,3 +1,4 @@
+
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
@@ -19,7 +20,9 @@ const Reservation = lazy(() => import("./components/Reservation"));
 const MyOrders = lazy(() => import("./components/MyOrders"));
 const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
 const AdminOrders = lazy(() => import("./components/AdminOrders"));
-const AdminReservations = lazy(() => import("./components/AdminReservations"));
+const AdminReservations = lazy(
+  () => import("./components/AdminReservations")
+);
 
 type HomePageProps = {
   cartItems: CartItem[];
@@ -32,6 +35,7 @@ function PageLoader() {
     <div className="min-h-screen pt-24 px-4 bg-orange-50 dark:bg-slate-950">
       <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
         <div className="h-10 w-56 rounded-xl bg-orange-200 dark:bg-slate-800" />
+
         <div className="grid md:grid-cols-3 gap-6">
           <div className="h-56 rounded-3xl bg-orange-100 dark:bg-slate-800" />
           <div className="h-56 rounded-3xl bg-orange-100 dark:bg-slate-800" />
@@ -46,13 +50,20 @@ function ScrollToTop() {
   const location = useLocation();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }, [location.pathname]);
 
   return null;
 }
 
-function HomePage({ cartItems, setCartItems, isMenuOpen }: HomePageProps) {
+function HomePage({
+  cartItems,
+  setCartItems,
+  isMenuOpen,
+}: HomePageProps) {
   return (
     <main
       className={`page-transition pt-16 transition-transform duration-300 ${
@@ -60,7 +71,12 @@ function HomePage({ cartItems, setCartItems, isMenuOpen }: HomePageProps) {
       }`}
     >
       <Hero />
-      <MenuSection cartItems={cartItems} setCartItems={setCartItems} />
+
+      <MenuSection
+        cartItems={cartItems}
+        setCartItems={setCartItems}
+      />
+
       <About />
       <Gallery />
       <Contact />
@@ -68,7 +84,11 @@ function HomePage({ cartItems, setCartItems, isMenuOpen }: HomePageProps) {
   );
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const isLoggedIn = localStorage.getItem("isLoggedIn");
 
   if (isLoggedIn !== "true") {
@@ -78,8 +98,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AdminRoute({ children }: { children: React.ReactNode }) {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+function AdminRoute({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const user = JSON.parse(
+    localStorage.getItem("user") || "{}"
+  );
 
   if (user.email !== "admin@savoryhaven.com") {
     return <Navigate to="/home" replace />;
@@ -89,7 +115,12 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  // =========================
+  // GLOBAL CART STATE
+  // =========================
+
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
   const [isMenuOpen] = useState(false);
 
   return (
@@ -98,8 +129,28 @@ function App() {
 
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/" element={<Loginpage />} />
-          <Route path="/register" element={<Registerpage />} />
+
+          {/* =========================
+              LOGIN
+          ========================= */}
+
+          <Route
+            path="/"
+            element={<Loginpage />}
+          />
+
+          {/* =========================
+              REGISTER
+          ========================= */}
+
+          <Route
+            path="/register"
+            element={<Registerpage />}
+          />
+
+          {/* =========================
+              HOME
+          ========================= */}
 
           <Route
             path="/home"
@@ -107,6 +158,7 @@ function App() {
               <ProtectedRoute>
                 <>
                   <Navbar cartItems={cartItems} />
+
                   <HomePage
                     cartItems={cartItems}
                     setCartItems={setCartItems}
@@ -117,17 +169,29 @@ function App() {
             }
           />
 
+          {/* =========================
+              FULL MENU
+          ========================= */}
+
           <Route
             path="/fullmenu"
             element={
               <ProtectedRoute>
                 <>
                   <Navbar cartItems={cartItems} />
-                  <FullMenu cartItems={cartItems} setCartItems={setCartItems} />
+
+                  <FullMenu
+                    cartItems={cartItems}
+                    setCartItems={setCartItems}
+                  />
                 </>
               </ProtectedRoute>
             }
           />
+
+          {/* =========================
+              CART
+          ========================= */}
 
           <Route
             path="/cart"
@@ -135,11 +199,19 @@ function App() {
               <ProtectedRoute>
                 <>
                   <Navbar cartItems={cartItems} />
-                  <CartPage cartItems={cartItems} />
+
+                  <CartPage
+                    cartItems={cartItems}
+                    setCartItems={setCartItems}
+                  />
                 </>
               </ProtectedRoute>
             }
           />
+
+          {/* =========================
+              PROFILE
+          ========================= */}
 
           <Route
             path="/profile"
@@ -147,11 +219,16 @@ function App() {
               <ProtectedRoute>
                 <>
                   <Navbar cartItems={cartItems} />
+
                   <Profile />
                 </>
               </ProtectedRoute>
             }
           />
+
+          {/* =========================
+              ORDERS
+          ========================= */}
 
           <Route
             path="/orders"
@@ -159,11 +236,16 @@ function App() {
               <ProtectedRoute>
                 <>
                   <Navbar cartItems={cartItems} />
+
                   <MyOrders />
                 </>
               </ProtectedRoute>
             }
           />
+
+          {/* =========================
+              RESERVATION
+          ========================= */}
 
           <Route
             path="/reservation"
@@ -171,11 +253,16 @@ function App() {
               <ProtectedRoute>
                 <>
                   <Navbar cartItems={cartItems} />
+
                   <Reservation />
                 </>
               </ProtectedRoute>
             }
           />
+
+          {/* =========================
+              ADMIN DASHBOARD
+          ========================= */}
 
           <Route
             path="/admin"
@@ -188,6 +275,10 @@ function App() {
             }
           />
 
+          {/* =========================
+              ADMIN ORDERS
+          ========================= */}
+
           <Route
             path="/admin/orders"
             element={
@@ -198,6 +289,10 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* =========================
+              ADMIN RESERVATIONS
+          ========================= */}
 
           <Route
             path="/admin/reservations"
@@ -210,7 +305,15 @@ function App() {
             }
           />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* =========================
+              UNKNOWN ROUTE
+          ========================= */}
+
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
+          />
+
         </Routes>
       </Suspense>
     </>
