@@ -1,6 +1,10 @@
-
 import { Suspense, lazy, useEffect, useState } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -18,15 +22,21 @@ const CartPage = lazy(() => import("./components/CartPage"));
 const Profile = lazy(() => import("./components/Profile"));
 const Reservation = lazy(() => import("./components/Reservation"));
 const MyOrders = lazy(() => import("./components/MyOrders"));
-const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
-const AdminOrders = lazy(() => import("./components/AdminOrders"));
+const AdminDashboard = lazy(
+  () => import("./components/AdminDashboard")
+);
+const AdminOrders = lazy(
+  () => import("./components/AdminOrders")
+);
 const AdminReservations = lazy(
   () => import("./components/AdminReservations")
 );
 
 type HomePageProps = {
   cartItems: CartItem[];
-  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  setCartItems: React.Dispatch<
+    React.SetStateAction<CartItem[]>
+  >;
   isMenuOpen: boolean;
 };
 
@@ -67,7 +77,9 @@ function HomePage({
   return (
     <main
       className={`page-transition pt-16 transition-transform duration-300 ${
-        isMenuOpen ? "translate-x-64" : "translate-x-0"
+        isMenuOpen
+          ? "translate-x-64"
+          : "translate-x-0"
       }`}
     >
       <Hero />
@@ -115,12 +127,15 @@ function AdminRoute({
 }
 
 function App() {
-  // =========================
+  // ==========================================
   // GLOBAL CART STATE
-  // =========================
+  // ==========================================
 
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(
+    []
+  );
 
+  // Navbar/mobile menu state
   const [isMenuOpen] = useState(false);
 
   return (
@@ -133,7 +148,6 @@ function App() {
           {/* =========================
               LOGIN
           ========================= */}
-
           <Route
             path="/"
             element={<Loginpage />}
@@ -142,7 +156,6 @@ function App() {
           {/* =========================
               REGISTER
           ========================= */}
-
           <Route
             path="/register"
             element={<Registerpage />}
@@ -151,7 +164,6 @@ function App() {
           {/* =========================
               HOME
           ========================= */}
-
           <Route
             path="/home"
             element={
@@ -172,7 +184,6 @@ function App() {
           {/* =========================
               FULL MENU
           ========================= */}
-
           <Route
             path="/fullmenu"
             element={
@@ -181,8 +192,9 @@ function App() {
                   <Navbar cartItems={cartItems} />
 
                   <FullMenu
-                    cartItems={cartItems}
-                    setCartItems={setCartItems}
+                     cartItems={cartItems}
+                      setCartItems={setCartItems}
+
                   />
                 </>
               </ProtectedRoute>
@@ -192,7 +204,6 @@ function App() {
           {/* =========================
               CART
           ========================= */}
-
           <Route
             path="/cart"
             element={
@@ -212,7 +223,6 @@ function App() {
           {/* =========================
               PROFILE
           ========================= */}
-
           <Route
             path="/profile"
             element={
@@ -227,9 +237,8 @@ function App() {
           />
 
           {/* =========================
-              ORDERS
+              MY ORDERS
           ========================= */}
-
           <Route
             path="/orders"
             element={
@@ -246,7 +255,6 @@ function App() {
           {/* =========================
               RESERVATION
           ========================= */}
-
           <Route
             path="/reservation"
             element={
@@ -263,7 +271,6 @@ function App() {
           {/* =========================
               ADMIN DASHBOARD
           ========================= */}
-
           <Route
             path="/admin"
             element={
@@ -278,7 +285,6 @@ function App() {
           {/* =========================
               ADMIN ORDERS
           ========================= */}
-
           <Route
             path="/admin/orders"
             element={
@@ -293,7 +299,6 @@ function App() {
           {/* =========================
               ADMIN RESERVATIONS
           ========================= */}
-
           <Route
             path="/admin/reservations"
             element={
@@ -308,7 +313,6 @@ function App() {
           {/* =========================
               UNKNOWN ROUTE
           ========================= */}
-
           <Route
             path="*"
             element={<Navigate to="/" replace />}
