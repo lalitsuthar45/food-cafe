@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 
-const API_URL = import.meta.env.VITE_API_URL;
+// Railway Backend Production URL with Fallback
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://pythonfastapi-production-f08a.up.railway.app";
 
 type UserData = {
   id: number;
@@ -18,20 +21,22 @@ function Registerpage() {
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const saveUser = (user: UserData, message: string) => {
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("user", JSON.stringify(user));
     alert(message);
-    window.location.href = "/home";
+    navigate("/home");
   };
 
   const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
-      alert("Google login failed");
+      alert("Google login failed: No token received");
       return;
     }
 
+    setLoading(true);
     try {
       const response = await fetch(`${API_URL}/google-login`, {
         method: "POST",
@@ -47,8 +52,11 @@ function Registerpage() {
       }
 
       saveUser(data.user, data.message || "Google Login Successful");
-    } catch {
-      alert("Backend server not running");
+    } catch (err: any) {
+      console.error("Google Login Error:", err);
+      alert(`Network Error: ${err.message || "Unable to reach server"}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,28 +67,36 @@ function Registerpage() {
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.email || !formData.password) {
+    const name = formData.name.trim();
+    const email = formData.email.trim();
+    const password = formData.password.trim();
+
+    if (!name || !email || !password) {
       alert("Please fill all fields");
       return;
     }
 
+    setLoading(true);
     try {
       const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Register failed");
+        alert(data.detail || "Registration failed");
         return;
       }
 
       saveUser(data.user, data.message || "Registration successful");
-    } catch {
-      alert("Backend server not running");
+    } catch (err: any) {
+      console.error("Register Error:", err);
+      alert(`Network Error: ${err.message || "Unable to reach server"}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,6 +127,7 @@ function Registerpage() {
             placeholder="Full name"
             value={formData.name}
             onChange={handleChange}
+            required
             className="w-full border p-3 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-orange-500"
           />
 
@@ -120,6 +137,7 @@ function Registerpage() {
             placeholder="Email address"
             value={formData.email}
             onChange={handleChange}
+            required
             className="w-full border p-3 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-orange-500"
           />
 
@@ -129,14 +147,18 @@ function Registerpage() {
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
+            required
             className="w-full border p-3 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-orange-500"
           />
 
           <button
             type="submit"
-            className="w-full bg-orange-600 text-white py-3 rounded-xl font-semibold hover:bg-orange-700 transition"
+            disabled={loading}
+            className={`w-full bg-orange-600 text-white py-3 rounded-xl font-semibold transition ${
+              loading ? "opacity-70 cursor-not-allowed" : "hover:bg-orange-700"
+            }`}
           >
-            Register & Enter Website
+            {loading ? "Registering..." : "Register & Enter Website"}
           </button>
 
           <div className="my-5 flex items-center gap-3">
