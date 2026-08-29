@@ -29,9 +29,9 @@ export default function Contact() {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-1">Address</h4>
                   <p className="text-gray-600">
-                    123 Siyana avenue,Jalore District
+                    123 Siyana avenue, Jalore District
                     <br />
-                   rajasthan ,343024
+                   rajasthan, 343024
                   </p>
                 </div>
               </div>
