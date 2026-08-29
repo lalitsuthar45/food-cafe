@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 
-const API_URL = " http://10.44.113.252:8000";
+const API_URL = " http://10.201.230.252:8000";
 
 type UserData = {
   id: number;
