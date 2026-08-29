@@ -44,16 +44,16 @@ function CartPage({ cartItems }: CartPageProps) {
   const discount = itemsTotal > 999 ? 100 : 0;
   const grandTotal = itemsTotal + gst + deliveryCharge - discount;
 
-  const getApiUrl = () => {
-    if (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-    ) {
-      return "http://10.44.113.252:8000";
-    }
+ const getApiUrl = () => {
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    return "http://10.44.113.252:8000";
+  }
 
-    return `http://${window.location.hostname}:8000`;
-  };
+  return import.meta.env.VITE_API_URL;
+};
 
   const handleCardNumberChange = (value: string) => {
     const digitsOnly = value.replace(/\D/g, "").slice(0, 16);

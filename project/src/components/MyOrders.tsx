@@ -33,15 +33,15 @@ function MyOrders() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const getApiUrl = () => {
-    if (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-    ) {
-      return "http://10.44.113.252:8000";
-    }
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    return "http://10.44.113.252:8000";
+  }
 
-    return `http://${window.location.hostname}:8000`;
-  };
+  return import.meta.env.VITE_API_URL;
+};
 
   const fetchOrders = async () => {
     if (!user.email) {
