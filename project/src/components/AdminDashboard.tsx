@@ -19,18 +19,16 @@ function AdminDashboard() {
     revenue: 0,
   });
 
-  const [loading, setLoading] = useState(true);
-
   const getApiUrl = () => {
-    if (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-    ) {
-      return "http://10.44.113.252:8000";
-    }
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    return "http://10.201.230.252:8000";
+  }
 
-    return `http://${window.location.hostname}:8000`;
-  };
+  return import.meta.env.VITE_API_URL;
+};
 
   useEffect(() => {
     const fetchDashboard = async () => {
