@@ -29,9 +29,9 @@ export default function Contact() {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-1">Address</h4>
                   <p className="text-gray-600">
-                    123 Culinary Avenue, Food District
+                    123 Siyana avenue,Jalore District
                     <br />
-                    New York, NY 10001
+                   rajasthan ,343024
                   </p>
                 </div>
               </div>
@@ -73,7 +73,7 @@ export default function Contact() {
 
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <a
-                href="tel:+15551234567"
+                href="tel:+7878037679"
                 className="text-center bg-amber-600 text-white py-3 rounded-xl font-semibold hover:bg-amber-700 transition"
               >
                 Call Now
@@ -87,7 +87,7 @@ export default function Contact() {
               </a>
 
               <a
-                href="https://wa.me/15551234567"
+                href="https://wa.me/7878037679"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition"
