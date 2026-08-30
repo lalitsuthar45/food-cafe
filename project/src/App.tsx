@@ -32,6 +32,15 @@ const AdminReservations = lazy(
   () => import("./components/AdminReservations")
 );
 
+// =========================================================
+// ADMIN EMAILS LIST (Sirf ye emails admin access kar sakti hain)
+// =========================================================
+const ADMIN_EMAILS = [
+  "admin@savoryhaven.com",
+  // Apna admin email yahan add karein:
+  // "youradmin@gmail.com",
+];
+
 type HomePageProps = {
   cartItems: CartItem[];
   setCartItems: React.Dispatch<
@@ -96,33 +105,90 @@ function HomePage({
   );
 }
 
+// =========================================================
+// HELPER: Safely get logged-in user from localStorage
+// =========================================================
+function getAuthUser(): { id: number; name: string; email: string } | null {
+  try {
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    if (!isLoggedIn) return null;
+
+    const userStr = localStorage.getItem("user");
+    if (!userStr) return null;
+
+    const user = JSON.parse(userStr);
+    if (!user || !user.email) return null;
+
+    return user;
+  } catch {
+    // Agar localStorage corrupt hai toh clean karo
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("user");
+    return null;
+  }
+}
+
+// =========================================================
+// PUBLIC ROUTE: Logged-in user ko Login/Register nahi dikhega
+// =========================================================
+function PublicRoute({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const user = getAuthUser();
+
+  // Agar already logged in hai toh Home par bhejo
+  if (user) {
+    return <Navigate to="/home" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+// =========================================================
+// PROTECTED ROUTE: Bina login kiye koi page nahi khulega
+// =========================================================
 function ProtectedRoute({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const isLoggedIn = localStorage.getItem("isLoggedIn");
+  const user = getAuthUser();
 
-  if (isLoggedIn !== "true") {
+  // Agar login nahi hai ya user data invalid hai -> Login page
+  if (!user) {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("user");
     return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 }
 
+// =========================================================
+// ADMIN ROUTE: Login + Admin Email dono check hote hain
+// =========================================================
 function AdminRoute({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = JSON.parse(
-    localStorage.getItem("user") || "{}"
-  );
+  const user = getAuthUser();
 
-  if (user.email !== "admin@savoryhaven.com") {
+  // 1. Agar login hi nahi hai -> Login page par bhejo
+  if (!user) {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("user");
+    return <Navigate to="/" replace />;
+  }
+
+  // 2. Agar logged in hai lekin Admin nahi hai -> Home par bhejo
+  if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) {
     return <Navigate to="/home" replace />;
   }
 
+  // 3. Admin hai -> Panel kholo
   return <>{children}</>;
 }
 
@@ -146,19 +212,27 @@ function App() {
         <Routes>
 
           {/* =========================
-              LOGIN
+              LOGIN (Public Only)
           ========================= */}
           <Route
             path="/"
-            element={<Loginpage />}
+            element={
+              <PublicRoute>
+                <Loginpage />
+              </PublicRoute>
+            }
           />
 
           {/* =========================
-              REGISTER
+              REGISTER (Public Only)
           ========================= */}
           <Route
             path="/register"
-            element={<Registerpage />}
+            element={
+              <PublicRoute>
+                <Registerpage />
+              </PublicRoute>
+            }
           />
 
           {/* =========================
@@ -192,9 +266,8 @@ function App() {
                   <Navbar cartItems={cartItems} />
 
                   <FullMenu
-                     cartItems={cartItems}
-                      setCartItems={setCartItems}
-
+                    cartItems={cartItems}
+                    setCartItems={setCartItems}
                   />
                 </>
               </ProtectedRoute>
@@ -269,49 +342,43 @@ function App() {
           />
 
           {/* =========================
-              ADMIN DASHBOARD
+              ADMIN DASHBOARD (Admin Only)
           ========================= */}
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              </ProtectedRoute>
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
             }
           />
 
           {/* =========================
-              ADMIN ORDERS
+              ADMIN ORDERS (Admin Only)
           ========================= */}
           <Route
             path="/admin/orders"
             element={
-              <ProtectedRoute>
-                <AdminRoute>
-                  <AdminOrders />
-                </AdminRoute>
-              </ProtectedRoute>
+              <AdminRoute>
+                <AdminOrders />
+              </AdminRoute>
             }
           />
 
           {/* =========================
-              ADMIN RESERVATIONS
+              ADMIN RESERVATIONS (Admin Only)
           ========================= */}
           <Route
             path="/admin/reservations"
             element={
-              <ProtectedRoute>
-                <AdminRoute>
-                  <AdminReservations />
-                </AdminRoute>
-              </ProtectedRoute>
+              <AdminRoute>
+                <AdminReservations />
+              </AdminRoute>
             }
           />
 
           {/* =========================
-              UNKNOWN ROUTE
+              UNKNOWN ROUTE -> Login
           ========================= */}
           <Route
             path="*"
