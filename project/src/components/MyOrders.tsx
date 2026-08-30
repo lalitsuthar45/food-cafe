@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   ChevronDown,
@@ -197,6 +196,21 @@ function MyOrders() {
     return import.meta.env.VITE_API_URL;
   };
 
+  // =========================
+  // AUTH HEADER
+  // Backend ke /orders route ko login token chahiye
+  // (Depends(get_current_user)). Token na bheja jaye to
+  // FastAPI seedha "Not authenticated" bhej deta hai.
+  // =========================
+
+ const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem("access_token");
+
+    return token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+  };
+
   const fetchOrders = async () => {
     if (!user.email) {
       setOrders([]);
@@ -206,7 +220,10 @@ function MyOrders() {
 
     try {
       const response = await fetch(
-        `${getApiUrl()}/orders/${encodeURIComponent(user.email)}`
+        `${getApiUrl()}/orders/${encodeURIComponent(user.email)}`,
+        {
+          headers: getAuthHeaders(),
+        }
       );
 
       const data = await response.json();
@@ -276,6 +293,7 @@ function MyOrders() {
         `${getApiUrl()}/orders/${orderId}/cancel`,
         {
           method: "PUT",
+          headers: getAuthHeaders(),
         }
       );
 

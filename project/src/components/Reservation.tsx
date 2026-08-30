@@ -34,15 +34,30 @@ function Reservation() {
   const [cancelLoadingId, setCancelLoadingId] = useState<number | null>(null);
 
   const getApiUrl = () => {
-  if (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
-  ) {
-    return "http://10.201.230.252:8000";
-  }
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      return "http://10.201.230.252:8000";
+    }
 
-  return import.meta.env.VITE_API_URL;
-};
+    return import.meta.env.VITE_API_URL;
+  };
+
+  // =========================
+  // AUTH HEADER
+  // Backend ke /reservations routes ko login token
+  // chahiye (Depends(get_current_user)). Token na bheja
+  // jaye to FastAPI "Not authenticated" bhej deta hai.
+  // =========================
+
+ const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem("access_token");
+
+    return token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+  };
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -61,7 +76,10 @@ function Reservation() {
 
     try {
       const response = await fetch(
-        `${getApiUrl()}/reservations/${encodeURIComponent(user.email)}`
+        `${getApiUrl()}/reservations/${encodeURIComponent(user.email)}`,
+        {
+          headers: getAuthHeaders(),
+        }
       );
 
       const data = await response.json();
@@ -128,6 +146,7 @@ function Reservation() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(reservationData),
       });
@@ -167,13 +186,16 @@ function Reservation() {
       return;
     }
 
-        setCancelLoadingId(reservationId);
+    setCancelLoadingId(reservationId);
 
     try {
+      // Backend route: PUT /reservations/{reservation_id}/cancel
+      // (URL order pehle galat tha: /reservations/cancel/{id})
       const response = await fetch(
-        `${getApiUrl()}/reservations/cancel/${reservationId}`,
+        `${getApiUrl()}/reservations/${reservationId}/cancel`,
         {
           method: "PUT",
+          headers: getAuthHeaders(),
         }
       );
 
