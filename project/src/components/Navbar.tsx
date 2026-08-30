@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { CartItem } from "./FullMenu";
+import { useAuth } from "./AuthContext";
 
 interface NavbarProps {
   cartItems: CartItem[];
@@ -25,7 +26,11 @@ export default function Navbar({ cartItems }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  // Ab currentUser AuthContext se aa raha hai, direct
+  // localStorage parse nahi ho raha — hamesha sync rahega.
+  const { currentUser, logout } = useAuth();
+  const user = currentUser || { name: "", email: "" };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,9 +56,18 @@ export default function Navbar({ cartItems }: NavbarProps) {
     setIsMenuOpen(false);
   };
 
-  const logout = () => {
-    localStorage.clear();
-    navigate("/");
+  // =====================================================
+  // LOGOUT
+  // AuthContext ka logout() currentUser state ko turant
+  // null kar deta hai, isliye ProtectedRoute turant "/" pe
+  // bhej dega — koi refresh ki zaroorat nahi.
+  // =====================================================
+
+  const handleLogout = () => {
+    setProfileOpen(false);
+    setIsMenuOpen(false);
+    logout();
+    navigate("/", { replace: true });
   };
 
   const navItems = [
@@ -175,7 +189,7 @@ export default function Navbar({ cartItems }: NavbarProps) {
                   </button>
 
                   <button
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="w-full mt-1 text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded-xl flex gap-2 items-center"
                   >
                     <LogOut size={18} />
@@ -259,7 +273,7 @@ export default function Navbar({ cartItems }: NavbarProps) {
             </button>
 
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 transition"
             >
               <LogOut size={20} />
