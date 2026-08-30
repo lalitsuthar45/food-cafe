@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Coffee,
   UtensilsCrossed,
@@ -308,12 +308,19 @@ export default function MenuSection({
       id="menu"
       className="relative py-24 bg-gradient-to-br from-white via-orange-50 to-amber-50 dark:from-slate-950 dark:via-slate-900 dark:to-orange-950 overflow-hidden"
     >
-      {/* SUCCESS TOAST */}
-      {toast && (
-        <div className="toast-success">
-          {toast}
-        </div>
-      )}
+      {/* =========================================================
+          SUCCESS TOAST
+          Portal se seedha document.body mein render kiya, taaki
+          Home page ke <main> wale transform (translate-x-0 /
+          translate-x-64) aur is section ke overflow-hidden se
+          toast clip/hide na ho. FullMenu page pe koi transformed
+          parent nahi hai isliye wahan ye problem nahi thi.
+      ========================================================= */}
+      {toast &&
+        createPortal(
+          <div className="toast-success">{toast}</div>,
+          document.body
+        )}
 
       <div className="absolute top-10 left-10 w-72 h-72 bg-orange-300/20 rounded-full blur-3xl" />
 
