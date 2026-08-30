@@ -1,4 +1,10 @@
-import { Suspense, lazy, useEffect, useState } from "react";
+import {
+  Suspense,
+  lazy,
+  useEffect,
+  useState,
+} from "react";
+
 import {
   Routes,
   Route,
@@ -17,73 +23,123 @@ import Registerpage from "./components/Registerpage";
 
 import type { CartItem } from "./components/FullMenu";
 
+
+// =========================================================
+// LAZY COMPONENTS
+// =========================================================
+
 const FullMenu = lazy(() => import("./components/FullMenu"));
 const CartPage = lazy(() => import("./components/CartPage"));
 const Profile = lazy(() => import("./components/Profile"));
 const Reservation = lazy(() => import("./components/Reservation"));
 const MyOrders = lazy(() => import("./components/MyOrders"));
+
 const AdminDashboard = lazy(
   () => import("./components/AdminDashboard")
 );
+
 const AdminOrders = lazy(
   () => import("./components/AdminOrders")
 );
+
 const AdminReservations = lazy(
   () => import("./components/AdminReservations")
 );
 
+
 // =========================================================
-// ADMIN EMAILS LIST (Sirf ye emails admin access kar sakti hain)
+// API URL
 // =========================================================
-const ADMIN_EMAILS = [
-  "lalitbhardwaj@gmail.com",
-  // Apna admin email yahan add karein:
-  // "youradmin@gmail.com",
-];
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://pythonfastapi-production-f08a.up.railway.app";
+
+
+// =========================================================
+// TYPES
+// =========================================================
+
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  role?: string;
+};
 
 type HomePageProps = {
   cartItems: CartItem[];
+
   setCartItems: React.Dispatch<
     React.SetStateAction<CartItem[]>
   >;
+
   isMenuOpen: boolean;
 };
+
+
+// =========================================================
+// PAGE LOADER
+// =========================================================
 
 function PageLoader() {
   return (
     <div className="min-h-screen pt-24 px-4 bg-orange-50 dark:bg-slate-950">
+
       <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
+
         <div className="h-10 w-56 rounded-xl bg-orange-200 dark:bg-slate-800" />
 
         <div className="grid md:grid-cols-3 gap-6">
+
           <div className="h-56 rounded-3xl bg-orange-100 dark:bg-slate-800" />
+
           <div className="h-56 rounded-3xl bg-orange-100 dark:bg-slate-800" />
+
           <div className="h-56 rounded-3xl bg-orange-100 dark:bg-slate-800" />
+
         </div>
+
       </div>
+
     </div>
   );
 }
 
+
+// =========================================================
+// SCROLL TO TOP
+// =========================================================
+
 function ScrollToTop() {
+
   const location = useLocation();
 
   useEffect(() => {
+
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
+
   }, [location.pathname]);
 
   return null;
 }
+
+
+// =========================================================
+// HOME PAGE
+// =========================================================
 
 function HomePage({
   cartItems,
   setCartItems,
   isMenuOpen,
 }: HomePageProps) {
+
   return (
+
     <main
       className={`page-transition pt-16 transition-transform duration-300 ${
         isMenuOpen
@@ -91,6 +147,7 @@ function HomePage({
           : "translate-x-0"
       }`}
     >
+
       <Hero />
 
       <MenuSection
@@ -99,296 +156,598 @@ function HomePage({
       />
 
       <About />
+
       <Gallery />
+
       <Contact />
+
     </main>
   );
 }
 
-// =========================================================
-// HELPER: Safely get logged-in user from localStorage
-// =========================================================
-function getAuthUser(): { id: number; name: string; email: string } | null {
-  try {
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (!isLoggedIn) return null;
-
-    const userStr = localStorage.getItem("user");
-    if (!userStr) return null;
-
-    const user = JSON.parse(userStr);
-    if (!user || !user.email) return null;
-
-    return user;
-  } catch {
-    // Agar localStorage corrupt hai toh clean karo
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("user");
-    return null;
-  }
-}
 
 // =========================================================
-// PUBLIC ROUTE: Logged-in user ko Login/Register nahi dikhega
+// PUBLIC ROUTE
 // =========================================================
+
 function PublicRoute({
   children,
+  currentUser,
 }: {
   children: React.ReactNode;
+  currentUser: User | null;
 }) {
-  const user = getAuthUser();
 
-  // Agar already logged in hai toh Home par bhejo
-  if (user) {
-    return <Navigate to="/home" replace />;
+  if (currentUser) {
+
+    return (
+      <Navigate
+        to="/home"
+        replace
+      />
+    );
+
   }
 
   return <>{children}</>;
 }
 
+
 // =========================================================
-// PROTECTED ROUTE: Bina login kiye koi page nahi khulega
+// PROTECTED ROUTE
 // =========================================================
+
 function ProtectedRoute({
   children,
+  currentUser,
 }: {
   children: React.ReactNode;
+  currentUser: User | null;
 }) {
-  const user = getAuthUser();
 
-  // Agar login nahi hai ya user data invalid hai -> Login page
-  if (!user) {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("user");
-    return <Navigate to="/" replace />;
+  if (!currentUser) {
+
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
+
   }
 
   return <>{children}</>;
 }
 
+
 // =========================================================
-// ADMIN ROUTE: Login + Admin Email dono check hote hain
+// ADMIN ROUTE
 // =========================================================
+
 function AdminRoute({
   children,
+  currentUser,
 }: {
   children: React.ReactNode;
+  currentUser: User | null;
 }) {
-  const user = getAuthUser();
 
-  // 1. Agar login hi nahi hai -> Login page par bhejo
-  if (!user) {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("user");
-    return <Navigate to="/" replace />;
+  // Login required
+  if (!currentUser) {
+
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
+
   }
 
-  // 2. Agar logged in hai lekin Admin nahi hai -> Home par bhejo
-  if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) {
-    return <Navigate to="/home" replace />;
+
+  // Admin required
+  if (currentUser.role !== "admin") {
+
+    return (
+      <Navigate
+        to="/home"
+        replace
+      />
+    );
+
   }
 
-  // 3. Admin hai -> Panel kholo
   return <>{children}</>;
 }
 
+
+// =========================================================
+// APP
+// =========================================================
+
 function App() {
-  // ==========================================
-  // GLOBAL CART STATE
-  // ==========================================
 
-  const [cartItems, setCartItems] = useState<CartItem[]>(
-    []
-  );
+  // =======================================================
+  // GLOBAL CART
+  // =======================================================
 
-  // Navbar/mobile menu state
-  const [isMenuOpen] = useState(false);
+  const [cartItems, setCartItems] =
+    useState<CartItem[]>([]);
+
+
+  // =======================================================
+  // AUTH STATE
+  // =======================================================
+
+  const [currentUser, setCurrentUser] =
+    useState<User | null>(null);
+
+
+  const [authLoading, setAuthLoading] =
+    useState(true);
+
+
+  // =======================================================
+  // MOBILE MENU
+  // =======================================================
+
+  const [isMenuOpen] =
+    useState(false);
+
+
+  // =======================================================
+  // VERIFY AUTHENTICATION
+  // =======================================================
+
+  useEffect(() => {
+
+    const verifyAuthentication = async () => {
+
+      const token =
+        localStorage.getItem("access_token");
+
+
+      // No token
+      if (!token) {
+
+        localStorage.removeItem("user");
+
+        setCurrentUser(null);
+
+        setAuthLoading(false);
+
+        return;
+      }
+
+
+      try {
+
+        const response = await fetch(
+          `${API_URL}/me`,
+          {
+            method: "GET",
+
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+
+        // Token invalid / expired
+        if (!response.ok) {
+
+          localStorage.removeItem(
+            "access_token"
+          );
+
+          localStorage.removeItem(
+            "user"
+          );
+
+          setCurrentUser(null);
+
+          setAuthLoading(false);
+
+          return;
+        }
+
+
+        const data =
+          await response.json();
+
+
+        if (
+          !data ||
+          !data.user ||
+          !data.user.email
+        ) {
+
+          localStorage.removeItem(
+            "access_token"
+          );
+
+          localStorage.removeItem(
+            "user"
+          );
+
+          setCurrentUser(null);
+
+          setAuthLoading(false);
+
+          return;
+        }
+
+
+        // Valid authenticated user
+        setCurrentUser(data.user);
+
+
+        // Update local user data
+        localStorage.setItem(
+          "user",
+          JSON.stringify(data.user)
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Authentication verification failed:",
+          error
+        );
+
+        localStorage.removeItem(
+          "access_token"
+        );
+
+        localStorage.removeItem(
+          "user"
+        );
+
+        setCurrentUser(null);
+
+      } finally {
+
+        setAuthLoading(false);
+
+      }
+
+    };
+
+
+    verifyAuthentication();
+
+  }, []);
+
+
+  // =======================================================
+  // SHOW LOADING WHILE AUTH IS BEING VERIFIED
+  // =======================================================
+
+  if (authLoading) {
+
+    return <PageLoader />;
+
+  }
+
+
+  // =======================================================
+  // ROUTES
+  // =======================================================
 
   return (
+
     <>
+
       <ScrollToTop />
 
-      <Suspense fallback={<PageLoader />}>
+      <Suspense
+        fallback={<PageLoader />}
+      >
+
         <Routes>
 
-          {/* =========================
-              LOGIN (Public Only)
-          ========================= */}
+
+          {/* =================================================
+              LOGIN
+          ================================================= */}
+
           <Route
             path="/"
             element={
-              <PublicRoute>
+
+              <PublicRoute
+                currentUser={currentUser}
+              >
+
                 <Loginpage />
+
               </PublicRoute>
+
             }
           />
 
-          {/* =========================
-              REGISTER (Public Only)
-          ========================= */}
+
+          {/* =================================================
+              REGISTER
+          ================================================= */}
+
           <Route
             path="/register"
             element={
-              <PublicRoute>
+
+              <PublicRoute
+                currentUser={currentUser}
+              >
+
                 <Registerpage />
+
               </PublicRoute>
+
             }
           />
 
-          {/* =========================
+
+          {/* =================================================
               HOME
-          ========================= */}
+          ================================================= */}
+
           <Route
             path="/home"
             element={
-              <ProtectedRoute>
+
+              <ProtectedRoute
+                currentUser={currentUser}
+              >
+
                 <>
-                  <Navbar cartItems={cartItems} />
+
+                  <Navbar
+                    cartItems={cartItems}
+                  />
 
                   <HomePage
                     cartItems={cartItems}
                     setCartItems={setCartItems}
                     isMenuOpen={isMenuOpen}
                   />
+
                 </>
+
               </ProtectedRoute>
+
             }
           />
 
-          {/* =========================
+
+          {/* =================================================
               FULL MENU
-          ========================= */}
+          ================================================= */}
+
           <Route
             path="/fullmenu"
             element={
-              <ProtectedRoute>
+
+              <ProtectedRoute
+                currentUser={currentUser}
+              >
+
                 <>
-                  <Navbar cartItems={cartItems} />
+
+                  <Navbar
+                    cartItems={cartItems}
+                  />
 
                   <FullMenu
                     cartItems={cartItems}
                     setCartItems={setCartItems}
                   />
+
                 </>
+
               </ProtectedRoute>
+
             }
           />
 
-          {/* =========================
+
+          {/* =================================================
               CART
-          ========================= */}
+          ================================================= */}
+
           <Route
             path="/cart"
             element={
-              <ProtectedRoute>
+
+              <ProtectedRoute
+                currentUser={currentUser}
+              >
+
                 <>
-                  <Navbar cartItems={cartItems} />
+
+                  <Navbar
+                    cartItems={cartItems}
+                  />
 
                   <CartPage
                     cartItems={cartItems}
                     setCartItems={setCartItems}
                   />
+
                 </>
+
               </ProtectedRoute>
+
             }
           />
 
-          {/* =========================
+
+          {/* =================================================
               PROFILE
-          ========================= */}
+          ================================================= */}
+
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
+
+              <ProtectedRoute
+                currentUser={currentUser}
+              >
+
                 <>
-                  <Navbar cartItems={cartItems} />
+
+                  <Navbar
+                    cartItems={cartItems}
+                  />
 
                   <Profile />
+
                 </>
+
               </ProtectedRoute>
+
             }
           />
 
-          {/* =========================
+
+          {/* =================================================
               MY ORDERS
-          ========================= */}
+          ================================================= */}
+
           <Route
             path="/orders"
             element={
-              <ProtectedRoute>
+
+              <ProtectedRoute
+                currentUser={currentUser}
+              >
+
                 <>
-                  <Navbar cartItems={cartItems} />
+
+                  <Navbar
+                    cartItems={cartItems}
+                  />
 
                   <MyOrders />
+
                 </>
+
               </ProtectedRoute>
+
             }
           />
 
-          {/* =========================
+
+          {/* =================================================
               RESERVATION
-          ========================= */}
+          ================================================= */}
+
           <Route
             path="/reservation"
             element={
-              <ProtectedRoute>
+
+              <ProtectedRoute
+                currentUser={currentUser}
+              >
+
                 <>
-                  <Navbar cartItems={cartItems} />
+
+                  <Navbar
+                    cartItems={cartItems}
+                  />
 
                   <Reservation />
+
                 </>
+
               </ProtectedRoute>
+
             }
           />
 
-          {/* =========================
-              ADMIN DASHBOARD (Admin Only)
-          ========================= */}
+
+          {/* =================================================
+              ADMIN DASHBOARD
+          ================================================= */}
+
           <Route
             path="/admin"
             element={
-              <AdminRoute>
+
+              <AdminRoute
+                currentUser={currentUser}
+              >
+
                 <AdminDashboard />
+
               </AdminRoute>
+
             }
           />
 
-          {/* =========================
-              ADMIN ORDERS (Admin Only)
-          ========================= */}
+
+          {/* =================================================
+              ADMIN ORDERS
+          ================================================= */}
+
           <Route
             path="/admin/orders"
             element={
-              <AdminRoute>
+
+              <AdminRoute
+                currentUser={currentUser}
+              >
+
                 <AdminOrders />
+
               </AdminRoute>
+
             }
           />
 
-          {/* =========================
-              ADMIN RESERVATIONS (Admin Only)
-          ========================= */}
+
+          {/* =================================================
+              ADMIN RESERVATIONS
+          ================================================= */}
+
           <Route
             path="/admin/reservations"
             element={
-              <AdminRoute>
+
+              <AdminRoute
+                currentUser={currentUser}
+              >
+
                 <AdminReservations />
+
               </AdminRoute>
+
             }
           />
 
-          {/* =========================
-              UNKNOWN ROUTE -> Login
-          ========================= */}
+
+          {/* =================================================
+              UNKNOWN URL
+          ================================================= */}
+
           <Route
             path="*"
-            element={<Navigate to="/" replace />}
+            element={
+              <Navigate
+                to="/"
+                replace
+              />
+            }
           />
 
         </Routes>
+
       </Suspense>
+
     </>
+
   );
 }
+
 
 export default App;
