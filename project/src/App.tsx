@@ -36,7 +36,7 @@ const AdminReservations = lazy(
 // ADMIN EMAILS LIST (Sirf ye emails admin access kar sakti hain)
 // =========================================================
 const ADMIN_EMAILS = [
-  "admin@savoryhaven.com",
+  "lalitbhardwaj@gmail.com",
   // Apna admin email yahan add karein:
   // "youradmin@gmail.com",
 ];
