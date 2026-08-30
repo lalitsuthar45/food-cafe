@@ -1,9 +1,4 @@
-import {
-  Suspense,
-  lazy,
-  useEffect,
-  useState,
-} from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 
 import {
   Routes,
@@ -21,8 +16,9 @@ import Contact from "./components/Contact";
 import Loginpage from "./components/Loginpage";
 import Registerpage from "./components/Registerpage";
 
-import type { CartItem } from "./components/FullMenu";
+import { AuthProvider, useAuth } from "./components/AuthContext";
 
+import type { CartItem } from "./components/FullMenu";
 
 // =========================================================
 // LAZY COMPONENTS
@@ -46,37 +42,15 @@ const AdminReservations = lazy(
   () => import("./components/AdminReservations")
 );
 
-
-// =========================================================
-// API URL
-// =========================================================
-
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "https://pythonfastapi-production-f08a.up.railway.app";
-
-
 // =========================================================
 // TYPES
 // =========================================================
 
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  role?: string;
-};
-
 type HomePageProps = {
   cartItems: CartItem[];
-
-  setCartItems: React.Dispatch<
-    React.SetStateAction<CartItem[]>
-  >;
-
+  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
   isMenuOpen: boolean;
 };
-
 
 // =========================================================
 // PAGE LOADER
@@ -85,48 +59,31 @@ type HomePageProps = {
 function PageLoader() {
   return (
     <div className="min-h-screen pt-24 px-4 bg-orange-50 dark:bg-slate-950">
-
       <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
-
         <div className="h-10 w-56 rounded-xl bg-orange-200 dark:bg-slate-800" />
-
         <div className="grid md:grid-cols-3 gap-6">
-
           <div className="h-56 rounded-3xl bg-orange-100 dark:bg-slate-800" />
-
           <div className="h-56 rounded-3xl bg-orange-100 dark:bg-slate-800" />
-
           <div className="h-56 rounded-3xl bg-orange-100 dark:bg-slate-800" />
-
         </div>
-
       </div>
-
     </div>
   );
 }
-
 
 // =========================================================
 // SCROLL TO TOP
 // =========================================================
 
 function ScrollToTop() {
-
   const location = useLocation();
 
   useEffect(() => {
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [location.pathname]);
 
   return null;
 }
-
 
 // =========================================================
 // HOME PAGE
@@ -137,617 +94,246 @@ function HomePage({
   setCartItems,
   isMenuOpen,
 }: HomePageProps) {
-
   return (
-
     <main
       className={`page-transition pt-16 transition-transform duration-300 ${
-        isMenuOpen
-          ? "translate-x-64"
-          : "translate-x-0"
+        isMenuOpen ? "translate-x-64" : "translate-x-0"
       }`}
     >
-
       <Hero />
-
-      <MenuSection
-        cartItems={cartItems}
-        setCartItems={setCartItems}
-      />
-
+      <MenuSection cartItems={cartItems} setCartItems={setCartItems} />
       <About />
-
       <Gallery />
-
       <Contact />
-
     </main>
   );
 }
 
-
 // =========================================================
-// PUBLIC ROUTE
+// PUBLIC ROUTE (reads auth from context now, not props)
 // =========================================================
 
-function PublicRoute({
-  children,
-  currentUser,
-}: {
-  children: React.ReactNode;
-  currentUser: User | null;
-}) {
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { currentUser } = useAuth();
 
   if (currentUser) {
-
-    return (
-      <Navigate
-        to="/home"
-        replace
-      />
-    );
-
+    return <Navigate to="/home" replace />;
   }
 
   return <>{children}</>;
 }
-
 
 // =========================================================
 // PROTECTED ROUTE
 // =========================================================
 
-function ProtectedRoute({
-  children,
-  currentUser,
-}: {
-  children: React.ReactNode;
-  currentUser: User | null;
-}) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { currentUser } = useAuth();
 
   if (!currentUser) {
-
-    return (
-      <Navigate
-        to="/"
-        replace
-      />
-    );
-
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 }
-
 
 // =========================================================
 // ADMIN ROUTE
 // =========================================================
 
-function AdminRoute({
-  children,
-  currentUser,
-}: {
-  children: React.ReactNode;
-  currentUser: User | null;
-}) {
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { currentUser } = useAuth();
 
   // Login required
   if (!currentUser) {
-
-    return (
-      <Navigate
-        to="/"
-        replace
-      />
-    );
-
+    return <Navigate to="/" replace />;
   }
-
 
   // Admin required
   if (currentUser.role !== "admin") {
-
-    return (
-      <Navigate
-        to="/home"
-        replace
-      />
-    );
-
+    return <Navigate to="/home" replace />;
   }
 
   return <>{children}</>;
 }
 
-
 // =========================================================
-// APP
+// APP ROUTES (everything that needs useAuth lives inside
+// AuthProvider, so it's split into its own component)
 // =========================================================
 
-function App() {
+function AppRoutes() {
+  const { authLoading } = useAuth();
 
-  // =======================================================
-  // GLOBAL CART
-  // =======================================================
-
-  const [cartItems, setCartItems] =
-    useState<CartItem[]>([]);
-
-
-  // =======================================================
-  // AUTH STATE
-  // =======================================================
-
-  const [currentUser, setCurrentUser] =
-    useState<User | null>(null);
-
-
-  const [authLoading, setAuthLoading] =
-    useState(true);
-
-
-  // =======================================================
-  // MOBILE MENU
-  // =======================================================
-
-  const [isMenuOpen] =
-    useState(false);
-
-
-  // =======================================================
-  // VERIFY AUTHENTICATION
-  // =======================================================
-
-  useEffect(() => {
-
-    const verifyAuthentication = async () => {
-
-      const token =
-        localStorage.getItem("access_token");
-
-
-      // No token
-      if (!token) {
-
-        localStorage.removeItem("user");
-
-        setCurrentUser(null);
-
-        setAuthLoading(false);
-
-        return;
-      }
-
-
-      try {
-
-        const response = await fetch(
-          `${API_URL}/me`,
-          {
-            method: "GET",
-
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-
-        // Token invalid / expired
-        if (!response.ok) {
-
-          localStorage.removeItem(
-            "access_token"
-          );
-
-          localStorage.removeItem(
-            "user"
-          );
-
-          setCurrentUser(null);
-
-          setAuthLoading(false);
-
-          return;
-        }
-
-
-        const data =
-          await response.json();
-
-
-        if (
-          !data ||
-          !data.user ||
-          !data.user.email
-        ) {
-
-          localStorage.removeItem(
-            "access_token"
-          );
-
-          localStorage.removeItem(
-            "user"
-          );
-
-          setCurrentUser(null);
-
-          setAuthLoading(false);
-
-          return;
-        }
-
-
-        // Valid authenticated user
-        setCurrentUser(data.user);
-
-
-        // Update local user data
-        localStorage.setItem(
-          "user",
-          JSON.stringify(data.user)
-        );
-
-      } catch (error) {
-
-        console.error(
-          "Authentication verification failed:",
-          error
-        );
-
-        localStorage.removeItem(
-          "access_token"
-        );
-
-        localStorage.removeItem(
-          "user"
-        );
-
-        setCurrentUser(null);
-
-      } finally {
-
-        setAuthLoading(false);
-
-      }
-
-    };
-
-
-    verifyAuthentication();
-
-  }, []);
-
-
-  // =======================================================
-  // SHOW LOADING WHILE AUTH IS BEING VERIFIED
-  // =======================================================
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isMenuOpen] = useState(false);
 
   if (authLoading) {
-
     return <PageLoader />;
-
   }
 
-
-  // =======================================================
-  // ROUTES
-  // =======================================================
-
   return (
-
     <>
-
       <ScrollToTop />
 
-      <Suspense
-        fallback={<PageLoader />}
-      >
-
+      <Suspense fallback={<PageLoader />}>
         <Routes>
-
-
-          {/* =================================================
-              LOGIN
-          ================================================= */}
-
+          {/* LOGIN */}
           <Route
             path="/"
             element={
-
-              <PublicRoute
-                currentUser={currentUser}
-              >
-
+              <PublicRoute>
                 <Loginpage />
-
               </PublicRoute>
-
             }
           />
 
-
-          {/* =================================================
-              REGISTER
-          ================================================= */}
-
+          {/* REGISTER */}
           <Route
             path="/register"
             element={
-
-              <PublicRoute
-                currentUser={currentUser}
-              >
-
+              <PublicRoute>
                 <Registerpage />
-
               </PublicRoute>
-
             }
           />
 
-
-          {/* =================================================
-              HOME
-          ================================================= */}
-
+          {/* HOME */}
           <Route
             path="/home"
             element={
-
-              <ProtectedRoute
-                currentUser={currentUser}
-              >
-
+              <ProtectedRoute>
                 <>
-
-                  <Navbar
-                    cartItems={cartItems}
-                  />
-
+                  <Navbar cartItems={cartItems} />
                   <HomePage
                     cartItems={cartItems}
                     setCartItems={setCartItems}
                     isMenuOpen={isMenuOpen}
                   />
-
                 </>
-
               </ProtectedRoute>
-
             }
           />
 
-
-          {/* =================================================
-              FULL MENU
-          ================================================= */}
-
+          {/* FULL MENU */}
           <Route
             path="/fullmenu"
             element={
-
-              <ProtectedRoute
-                currentUser={currentUser}
-              >
-
+              <ProtectedRoute>
                 <>
-
-                  <Navbar
-                    cartItems={cartItems}
-                  />
-
+                  <Navbar cartItems={cartItems} />
                   <FullMenu
                     cartItems={cartItems}
                     setCartItems={setCartItems}
                   />
-
                 </>
-
               </ProtectedRoute>
-
             }
           />
 
-
-          {/* =================================================
-              CART
-          ================================================= */}
-
+          {/* CART */}
           <Route
             path="/cart"
             element={
-
-              <ProtectedRoute
-                currentUser={currentUser}
-              >
-
+              <ProtectedRoute>
                 <>
-
-                  <Navbar
-                    cartItems={cartItems}
-                  />
-
+                  <Navbar cartItems={cartItems} />
                   <CartPage
                     cartItems={cartItems}
                     setCartItems={setCartItems}
                   />
-
                 </>
-
               </ProtectedRoute>
-
             }
           />
 
-
-          {/* =================================================
-              PROFILE
-          ================================================= */}
-
+          {/* PROFILE */}
           <Route
             path="/profile"
             element={
-
-              <ProtectedRoute
-                currentUser={currentUser}
-              >
-
+              <ProtectedRoute>
                 <>
-
-                  <Navbar
-                    cartItems={cartItems}
-                  />
-
+                  <Navbar cartItems={cartItems} />
                   <Profile />
-
                 </>
-
               </ProtectedRoute>
-
             }
           />
 
-
-          {/* =================================================
-              MY ORDERS
-          ================================================= */}
-
+          {/* MY ORDERS */}
           <Route
             path="/orders"
             element={
-
-              <ProtectedRoute
-                currentUser={currentUser}
-              >
-
+              <ProtectedRoute>
                 <>
-
-                  <Navbar
-                    cartItems={cartItems}
-                  />
-
+                  <Navbar cartItems={cartItems} />
                   <MyOrders />
-
                 </>
-
               </ProtectedRoute>
-
             }
           />
 
-
-          {/* =================================================
-              RESERVATION
-          ================================================= */}
-
+          {/* RESERVATION */}
           <Route
             path="/reservation"
             element={
-
-              <ProtectedRoute
-                currentUser={currentUser}
-              >
-
+              <ProtectedRoute>
                 <>
-
-                  <Navbar
-                    cartItems={cartItems}
-                  />
-
+                  <Navbar cartItems={cartItems} />
                   <Reservation />
-
                 </>
-
               </ProtectedRoute>
-
             }
           />
 
-
-          {/* =================================================
-              ADMIN DASHBOARD
-          ================================================= */}
-
+          {/* ADMIN DASHBOARD */}
           <Route
             path="/admin"
             element={
-
-              <AdminRoute
-                currentUser={currentUser}
-              >
-
+              <AdminRoute>
                 <AdminDashboard />
-
               </AdminRoute>
-
             }
           />
 
-
-          {/* =================================================
-              ADMIN ORDERS
-          ================================================= */}
-
+          {/* ADMIN ORDERS */}
           <Route
             path="/admin/orders"
             element={
-
-              <AdminRoute
-                currentUser={currentUser}
-              >
-
+              <AdminRoute>
                 <AdminOrders />
-
               </AdminRoute>
-
             }
           />
 
-
-          {/* =================================================
-              ADMIN RESERVATIONS
-          ================================================= */}
-
+          {/* ADMIN RESERVATIONS */}
           <Route
             path="/admin/reservations"
             element={
-
-              <AdminRoute
-                currentUser={currentUser}
-              >
-
+              <AdminRoute>
                 <AdminReservations />
-
               </AdminRoute>
-
             }
           />
 
-
-          {/* =================================================
-              UNKNOWN URL
-          ================================================= */}
-
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to="/"
-                replace
-              />
-            }
-          />
-
+          {/* UNKNOWN URL */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-
       </Suspense>
-
     </>
-
   );
 }
 
+// =========================================================
+// APP (wraps everything with AuthProvider)
+// =========================================================
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
+  );
+}
 
 export default App;
