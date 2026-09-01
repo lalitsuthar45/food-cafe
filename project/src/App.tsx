@@ -17,6 +17,8 @@ import Loginpage from "./components/Loginpage";
 import Registerpage from "./components/Registerpage";
 
 import { AuthProvider, useAuth } from "./components/AuthContext";
+import CookieConsent from "./components/CookieConsent";
+import { trackPageView } from "./components/analytics";
 
 import type { CartItem } from "./components/FullMenu";
 
@@ -80,6 +82,12 @@ function ScrollToTop() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // SPA hai, isliye har route change pe Google Analytics ko
+    // manually batana padta hai ki naya "page view" hua hai.
+    // (Agar user ne consent nahi diya, trackPageView khud hi
+    // kuch nahi karega.)
+    trackPageView(location.pathname);
   }, [location.pathname]);
 
   return null;
@@ -320,6 +328,8 @@ function AppRoutes() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
+
+      <CookieConsent />
     </>
   );
 }
