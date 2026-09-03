@@ -32,9 +32,26 @@ function AdminReservations() {
   return import.meta.env.VITE_API_URL;
 };
 
+  // =========================
+  // AUTH HEADER
+  // Backend ke /admin/* routes ko login token chahiye
+  // (Depends(get_current_admin)). Token na bheja jaye to
+  // FastAPI "Not authenticated" bhej deta hai.
+  // =========================
+
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem("access_token");
+
+    return token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+  };
+
   const fetchReservations = async () => {
     try {
-      const response = await fetch(`${getApiUrl()}/admin/reservations`);
+      const response = await fetch(`${getApiUrl()}/admin/reservations`, {
+        headers: getAuthHeaders(),
+      });
       const data = await response.json();
       setReservations(Array.isArray(data) ? data : []);
     } catch {
@@ -54,7 +71,10 @@ function AdminReservations() {
         `${getApiUrl()}/admin/reservations/${reservationId}/status?status=${encodeURIComponent(
           status
         )}`,
-        { method: "PUT" }
+        {
+          method: "PUT",
+          headers: getAuthHeaders(),
+        }
       );
 
       const data = await response.json();

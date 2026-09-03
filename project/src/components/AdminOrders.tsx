@@ -46,9 +46,27 @@ function AdminOrders() {
 
   return import.meta.env.VITE_API_URL;
 };
+
+  // =========================
+  // AUTH HEADER
+  // Backend ke /admin/* routes ko login token chahiye
+  // (Depends(get_current_admin)). Token na bheja jaye to
+  // FastAPI "Not authenticated" bhej deta hai.
+  // =========================
+
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem("access_token");
+
+    return token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+  };
+
   const fetchOrders = async () => {
     try {
-      const response = await fetch(`${getApiUrl()}/admin/orders`);
+      const response = await fetch(`${getApiUrl()}/admin/orders`, {
+        headers: getAuthHeaders(),
+      });
       const data = await response.json();
 
       if (!response.ok) {
@@ -78,6 +96,7 @@ function AdminOrders() {
         )}`,
         {
           method: "PUT",
+          headers: getAuthHeaders(),
         }
       );
 
