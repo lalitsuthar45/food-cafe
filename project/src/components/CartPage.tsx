@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
@@ -71,6 +70,21 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
     }
 
     return import.meta.env.VITE_API_URL;
+  };
+
+  // =========================
+  // AUTH HEADER
+  // Backend ke /orders route ko login token chahiye
+  // (Depends(get_current_user)). Token na bheja jaye to
+  // FastAPI "Not authenticated" bhej deta hai.
+  // =========================
+
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem("access_token");
+
+    return token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
   };
 
   // =========================
@@ -333,6 +347,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...getAuthHeaders(),
           },
           body: JSON.stringify(orderData),
         }
