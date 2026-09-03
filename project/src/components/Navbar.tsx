@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Menu,
   X,
@@ -24,6 +24,30 @@ export default function Navbar({ cartItems }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // =====================================================
+  // NEW CART ITEM NOTIFICATION (blinking dot)
+  // Jab bhi cart mein total quantity badhti hai, blink
+  // start ho jata hai. Cart section open hote hi (button
+  // click) blink band ho jata hai.
+  // =====================================================
+
+  const [hasNewCartItem, setHasNewCartItem] = useState(false);
+
+  const totalCartQuantity = cartItems.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
+
+  const prevCartQuantityRef = useRef(totalCartQuantity);
+
+  useEffect(() => {
+    if (totalCartQuantity > prevCartQuantityRef.current) {
+      setHasNewCartItem(true);
+    }
+
+    prevCartQuantityRef.current = totalCartQuantity;
+  }, [totalCartQuantity]);
 
   const navigate = useNavigate();
 
@@ -68,6 +92,17 @@ export default function Navbar({ cartItems }: NavbarProps) {
     setIsMenuOpen(false);
     logout();
     navigate("/", { replace: true });
+  };
+
+  // =====================================================
+  // GO TO CART
+  // Cart open hote hi naye item ka blink band ho jata hai.
+  // =====================================================
+
+  const goToCart = () => {
+    setHasNewCartItem(false);
+    navigate("/cart");
+    setIsMenuOpen(false);
   };
 
   const navItems = [
@@ -126,7 +161,7 @@ export default function Navbar({ cartItems }: NavbarProps) {
 
           <div className="hidden md:flex items-center gap-4">
             <button
-              onClick={() => navigate("/cart")}
+              onClick={goToCart}
               className="relative flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 text-orange-700 font-semibold hover:bg-orange-100 transition"
             >
               <ShoppingCart size={20} />
@@ -200,11 +235,25 @@ export default function Navbar({ cartItems }: NavbarProps) {
             </div>
           </div>
 
+          {/* =====================================================
+              MOBILE HAMBURGER
+              Naya item add hone par is icon ke top-right corner
+              pe blinking red dot dikhta hai, jab tak Cart section
+              open na ho jaye.
+          ===================================================== */}
+
           <button
-            className="md:hidden w-11 h-11 rounded-2xl bg-orange-50 text-orange-700 flex items-center justify-center"
+            className="relative md:hidden w-11 h-11 rounded-2xl bg-orange-50 text-orange-700 flex items-center justify-center"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
+
+            {hasNewCartItem && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white" />
+              </span>
+            )}
           </button>
         </div>
       </nav>
@@ -244,21 +293,39 @@ export default function Navbar({ cartItems }: NavbarProps) {
               </button>
             ))}
 
+            {/* =====================================================
+                CART BUTTON (SIDEBAR)
+                Naya item add hone par ye button bhi blink karta
+                hai (ring + pulse), taaki user ko exactly pata
+                chale kahan click karna hai. Click karte hi blink
+                band ho jata hai.
+            ===================================================== */}
+
             <button
-              onClick={() => {
-                navigate("/cart");
-                setIsMenuOpen(false);
-              }}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-orange-50 transition"
+              onClick={goToCart}
+              className={`relative w-full flex items-center justify-between px-4 py-3 rounded-xl transition ${
+                hasNewCartItem
+                  ? "bg-red-50 ring-2 ring-red-400 animate-pulse"
+                  : "hover:bg-orange-50"
+              }`}
             >
               <div className="flex items-center gap-3">
                 <ShoppingCart size={20} />
                 Cart
               </div>
 
-              <span className="bg-orange-500 text-white rounded-full px-2 py-1 text-xs font-bold">
-                {cartItems.length}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="bg-orange-500 text-white rounded-full px-2 py-1 text-xs font-bold">
+                  {cartItems.length}
+                </span>
+
+                {hasNewCartItem && (
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                  </span>
+                )}
+              </div>
             </button>
 
             <button
@@ -266,7 +333,7 @@ export default function Navbar({ cartItems }: NavbarProps) {
                 navigate("/profile");
                 setIsMenuOpen(false);
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-50 transition"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-50 text-gray-700 transition"
             >
               <User size={20} />
               My Profile
