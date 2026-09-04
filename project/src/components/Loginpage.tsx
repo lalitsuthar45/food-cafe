@@ -169,7 +169,7 @@ function Loginpage() {
   // =====================================================
 
   return (
-    <div className="min-h-screen flex items-stretch bg-[#FFF8F0]">
+    <main className="min-h-screen flex items-stretch bg-[#FFF8F0]">
       <div className="w-full grid lg:grid-cols-[1fr_1.1fr]">
 
         {/* =================================================
@@ -300,8 +300,9 @@ function Loginpage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
                   className="absolute right-0 top-1/2 -translate-y-1/2 text-[#B08968] hover:text-orange-600 transition-colors"
-                  tabIndex={-1}
                 >
                   {showPassword ? (
                     <EyeOff size={18} />
@@ -368,8 +369,6 @@ function Loginpage() {
       ================================================= */}
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap');
-
         .font-display {
           font-family: 'Fraunces', serif;
           font-optical-sizing: auto;
@@ -443,7 +442,7 @@ function Loginpage() {
           }
         }
       `}</style>
-    </div>
+    </main>
   );
 }
 
