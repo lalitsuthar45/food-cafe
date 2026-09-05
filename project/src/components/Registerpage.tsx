@@ -365,9 +365,11 @@ function Registerpage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  title={showPassword ? "Hide password" : "Show password"}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 text-[#B08968] hover:text-orange-600 transition-colors"
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                  className="absolute right-0 top-1/2 -translate-y-1/2 text-[#8B6F52] hover:text-orange-600 transition-colors"
+                  tabIndex={-1}
                 >
                   {showPassword ? (
                     <EyeOff size={18} />
@@ -378,7 +380,7 @@ function Registerpage() {
               </div>
             </div>
 
-            <p className="text-xs text-[#B8A896] mb-8">
+            <p className="text-xs text-[#8B7355] mb-8">
               Minimum 6 characters.
             </p>
 
@@ -399,7 +401,7 @@ function Registerpage() {
 
             <div className="my-7 flex items-center gap-3">
               <div className="h-px bg-[#E8DDD0] flex-1" />
-              <span className="text-xs text-[#B8A896] tracking-wide">
+              <span className="text-xs text-[#8B7355] tracking-wide">
                 or continue with
               </span>
               <div className="h-px bg-[#E8DDD0] flex-1" />
@@ -438,6 +440,8 @@ function Registerpage() {
       ================================================= */}
 
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap');
+
         .font-display {
           font-family: 'Fraunces', serif;
           font-optical-sizing: auto;

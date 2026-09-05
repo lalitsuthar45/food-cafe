@@ -245,6 +245,7 @@ export default function Navbar({ cartItems }: NavbarProps) {
           <button
             className="relative md:hidden w-11 h-11 rounded-2xl bg-orange-50 text-orange-700 flex items-center justify-center"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           >
             {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
 

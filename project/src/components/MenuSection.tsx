@@ -401,6 +401,7 @@ export default function MenuSection({
                 </div>
 
                 <button
+                  aria-label={`Add ${item.name} to favorites`}
                   className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 dark:bg-slate-900/90 flex items-center justify-center shadow hover:scale-110 transition"
                 >
                   <Heart
@@ -456,6 +457,7 @@ export default function MenuSection({
                       onClick={() =>
                         decreaseQuantity(item.id)
                       }
+                      aria-label={`Decrease quantity of ${item.name}`}
                       className="w-10 h-10 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 rounded-l-2xl transition"
                     >
                       <Minus size={16} />
@@ -470,6 +472,7 @@ export default function MenuSection({
                       onClick={() =>
                         increaseQuantity(item.id)
                       }
+                      aria-label={`Increase quantity of ${item.name}`}
                       className="w-10 h-10 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 rounded-r-2xl transition"
                     >
                       <Plus size={16} />
