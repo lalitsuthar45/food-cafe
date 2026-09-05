@@ -35,7 +35,6 @@ export default function MenuSection({
 }: Props) {
   const [activeCategory, setActiveCategory] = useState("starters");
   const [toast, setToast] = useState("");
-  const [quantities, setQuantities] = useState<Record<number, number>>({});
 
   const categories = [
     {
@@ -242,27 +241,12 @@ export default function MenuSection({
     }, 1800);
   };
 
-  const getQuantity = (id: number) => {
-    return quantities[id] || 1;
-  };
-
-  const increaseQuantity = (id: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Math.min((prev[id] || 1) + 1, 20),
-    }));
-  };
-
-  const decreaseQuantity = (id: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Math.max((prev[id] || 1) - 1, 1),
-    }));
+  const getCartQuantity = (id: number) => {
+    const cartItem = cartItems.find((ci) => ci.id === id);
+    return cartItem ? cartItem.quantity : 0;
   };
 
   const handleAddClick = (item: MenuItem) => {
-    const quantity = getQuantity(item.id);
-
     setCartItems((prevCartItems) => {
       const existing = prevCartItems.find(
         (cartItem) => cartItem.id === item.id
@@ -273,7 +257,7 @@ export default function MenuSection({
           cartItem.id === item.id
             ? {
                 ...cartItem,
-                quantity: cartItem.quantity + quantity,
+                quantity: cartItem.quantity + 1,
                 image: item.image,
               }
             : cartItem
@@ -287,20 +271,34 @@ export default function MenuSection({
           name: item.name,
           price: item.price,
           image: item.image,
-          quantity,
+          quantity: 1,
         },
       ];
     });
 
-    showToast(
-      `${quantity} × ${item.name} added to cart`
-    );
+    showToast(`${item.name} added to cart`);
+  };
 
-    // Add hone ke baad quantity dobara 1 se start hogi
-    setQuantities((prev) => ({
-      ...prev,
-      [item.id]: 1,
-    }));
+  const increaseCartQuantity = (item: MenuItem) => {
+    setCartItems((prevCartItems) =>
+      prevCartItems.map((cartItem) =>
+        cartItem.id === item.id
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem
+      )
+    );
+  };
+
+  const decreaseCartQuantity = (id: number) => {
+    setCartItems((prevCartItems) =>
+      prevCartItems
+        .map((cartItem) =>
+          cartItem.id === id
+            ? { ...cartItem, quantity: cartItem.quantity - 1 }
+            : cartItem
+        )
+        .filter((cartItem) => cartItem.quantity > 0)
+    );
   };
 
   return (
@@ -447,49 +445,53 @@ export default function MenuSection({
 
                 </div>
 
-                {/* QUANTITY + ADD */}
+                {/* QUANTITY / ADD (Add button becomes a stepper once item is in cart) */}
                 <div className="flex items-center gap-2">
 
-                  <div className="flex items-center rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-100 dark:border-slate-700">
+                  {getCartQuantity(item.id) === 0 ? (
 
                     <button
                       type="button"
-                      onClick={() =>
-                        decreaseQuantity(item.id)
-                      }
-                      aria-label={`Decrease quantity of ${item.name}`}
-                      className="w-10 h-10 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 rounded-l-2xl transition"
+                      onClick={() => handleAddClick(item)}
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-1 transition-all"
                     >
-                      <Minus size={16} />
+                      <ShoppingCart size={18} />
+                      Add
                     </button>
 
-                    <span className="w-8 text-center font-bold text-gray-900 dark:text-white">
-                      {getQuantity(item.id)}
-                    </span>
+                  ) : (
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        increaseQuantity(item.id)
-                      }
-                      aria-label={`Increase quantity of ${item.name}`}
-                      className="w-10 h-10 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 rounded-r-2xl transition"
-                    >
-                      <Plus size={16} />
-                    </button>
+                    <div className="w-full flex items-center justify-between rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-100 dark:border-slate-700 overflow-hidden">
 
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          decreaseCartQuantity(item.id)
+                        }
+                        aria-label={`Decrease quantity of ${item.name}`}
+                        className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
+                      >
+                        <Minus size={16} />
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleAddClick(item)
-                    }
-                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-1 transition-all"
-                  >
-                    <ShoppingCart size={18} />
-                    Add
-                  </button>
+                      <span className="font-bold text-gray-900 dark:text-white">
+                        {getCartQuantity(item.id)}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          increaseCartQuantity(item)
+                        }
+                        aria-label={`Increase quantity of ${item.name}`}
+                        className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
+                      >
+                        <Plus size={16} />
+                      </button>
+
+                    </div>
+
+                  )}
 
                 </div>
 

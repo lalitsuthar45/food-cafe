@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from "react";
 import {
   Search,
@@ -46,7 +45,6 @@ export default function FullMenu({
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState<SortType>("default");
   const [toast, setToast] = useState("");
-  const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [showFilters, setShowFilters] = useState(false);
 
   const menu: FoodItem[] = [
@@ -1149,63 +1147,72 @@ export default function FullMenu({
     }, 1800);
   };
 
-  const getQuantity = (id: number) => {
-    return quantities[id] || 1;
-  };
-
-  const increaseQuantity = (id: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Math.min((prev[id] || 1) + 1, 20),
-    }));
-  };
-
-  const decreaseQuantity = (id: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Math.max((prev[id] || 1) - 1, 1),
-    }));
-  };
-
   // ==========================================
-  // ADD TO CART
-  // IMAGE IS ALSO SAVED HERE
+  // CART QUANTITY (source of truth = cartItems)
+  // Add button dikhta hai jab tak item cart mein
+  // nahi hai. Add hote hi wahi jagah stepper
+  // (- qty +) mein badal jaati hai.
   // ==========================================
 
- const addToCart = (item: FoodItem) => {
-  const quantity = getQuantity(item.id);
+  const getCartQuantity = (id: number) => {
+    const cartItem = cartItems.find((ci) => ci.id === id);
+    return cartItem ? cartItem.quantity : 0;
+  };
 
-  setCartItems((prevCartItems) => {
-    const existing = prevCartItems.find(
-      (cartItem) => cartItem.id === item.id
-    );
-
-    if (existing) {
-      return prevCartItems.map((cartItem) =>
-        cartItem.id === item.id
-          ? {
-              ...cartItem,
-              quantity: cartItem.quantity + quantity,
-              image: item.image,
-            }
-          : cartItem
+  const addToCart = (item: FoodItem) => {
+    setCartItems((prevCartItems) => {
+      const existing = prevCartItems.find(
+        (cartItem) => cartItem.id === item.id
       );
-    }
 
-    return [
-      ...prevCartItems,
-      {
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        quantity,
-      },
-    ];
-  });
+      if (existing) {
+        return prevCartItems.map((cartItem) =>
+          cartItem.id === item.id
+            ? {
+                ...cartItem,
+                quantity: cartItem.quantity + 1,
+                image: item.image,
+              }
+            : cartItem
+        );
+      }
 
-  showToast(`${quantity} × ${item.name} added to cart`);
-};
+      return [
+        ...prevCartItems,
+        {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          quantity: 1,
+        },
+      ];
+    });
+
+    showToast(`${item.name} added to cart`);
+  };
+
+  const increaseCartQuantity = (item: FoodItem) => {
+    setCartItems((prevCartItems) =>
+      prevCartItems.map((cartItem) =>
+        cartItem.id === item.id
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem
+      )
+    );
+  };
+
+  const decreaseCartQuantity = (id: number) => {
+    setCartItems((prevCartItems) =>
+      prevCartItems
+        .map((cartItem) =>
+          cartItem.id === id
+            ? { ...cartItem, quantity: cartItem.quantity - 1 }
+            : cartItem
+        )
+        .filter((cartItem) => cartItem.quantity > 0)
+    );
+  };
 
   const getRating = (id: number) =>
     (4.4 + (id % 6) / 10).toFixed(1);
@@ -1432,6 +1439,7 @@ export default function FullMenu({
 
                   <button
                     type="button"
+                    aria-label={`Add ${item.name} to favorites`}
                     className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 dark:bg-slate-900/90 shadow flex items-center justify-center hover:scale-110 transition"
                   >
                     <Heart
@@ -1473,49 +1481,54 @@ export default function FullMenu({
                     {item.description}
                   </p>
 
-                  {/* QUANTITY + ADD */}
+                  {/* ADD / QUANTITY STEPPER */}
 
-                  <div className="mt-auto flex items-center gap-3">
+                  <div className="mt-auto">
 
-                    <div className="flex items-center rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-100 dark:border-slate-700">
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          decreaseQuantity(item.id)
-                        }
-                        className="w-10 h-10 flex items-center justify-center text-orange-600 hover:bg-orange-100 rounded-l-2xl transition"
-                      >
-                        <Minus size={16} />
-                      </button>
-
-                      <span className="w-8 text-center font-bold text-gray-900 dark:text-white">
-                        {getQuantity(item.id)}
-                      </span>
+                    {getCartQuantity(item.id) === 0 ? (
 
                       <button
                         type="button"
-                        onClick={() =>
-                          increaseQuantity(item.id)
-                        }
-                        className="w-10 h-10 flex items-center justify-center text-orange-600 hover:bg-orange-100 rounded-r-2xl transition"
+                        onClick={() => addToCart(item)}
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-1 transition"
                       >
-                        <Plus size={16} />
+                        <ShoppingCart size={18} />
+                        Add
                       </button>
 
-                    </div>
+                    ) : (
 
-                    <button
-                      type="button"
-                      onClick={() => addToCart(item)}
-                      className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-1 transition"
-                    >
+                      <div className="w-full flex items-center justify-between rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-100 dark:border-slate-700 overflow-hidden">
 
-                      <ShoppingCart size={18} />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            decreaseCartQuantity(item.id)
+                          }
+                          aria-label={`Decrease quantity of ${item.name}`}
+                          className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 transition"
+                        >
+                          <Minus size={16} />
+                        </button>
 
-                      Add
+                        <span className="font-bold text-gray-900 dark:text-white">
+                          {getCartQuantity(item.id)}
+                        </span>
 
-                    </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            increaseCartQuantity(item)
+                          }
+                          aria-label={`Increase quantity of ${item.name}`}
+                          className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 transition"
+                        >
+                          <Plus size={16} />
+                        </button>
+
+                      </div>
+
+                    )}
 
                   </div>
 
