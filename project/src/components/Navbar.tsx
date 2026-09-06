@@ -11,6 +11,7 @@ import {
   Phone,
   Info,
   ChevronDown,
+  Heart,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { CartItem } from "./FullMenu";
@@ -224,6 +225,17 @@ export default function Navbar({ cartItems }: NavbarProps) {
                   </button>
 
                   <button
+                    onClick={() => {
+                      setProfileOpen(false);
+                      navigate("/favourites");
+                    }}
+                    className="w-full mt-1 text-left px-3 py-2 hover:bg-orange-50 rounded-xl flex items-center gap-2 text-gray-700"
+                  >
+                    <Heart size={18} />
+                    Favourites
+                  </button>
+
+                  <button
                     onClick={handleLogout}
                     className="w-full mt-1 text-left px-3 py-2 hover:bg-red-50 text-red-600 rounded-xl flex gap-2 items-center"
                   >
@@ -327,6 +339,17 @@ export default function Navbar({ cartItems }: NavbarProps) {
                   </span>
                 )}
               </div>
+            </button>
+
+            <button
+              onClick={() => {
+                navigate("/favourites");
+                setIsMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-50 text-gray-700 transition"
+            >
+              <Heart size={20} />
+              Favourites
             </button>
 
             <button

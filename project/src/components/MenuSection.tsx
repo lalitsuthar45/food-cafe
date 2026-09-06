@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Coffee,
@@ -13,6 +13,10 @@ import {
   Plus,
 } from "lucide-react";
 import type { CartItem } from "./FullMenu";
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://pythonfastapi-production-f08a.up.railway.app";
 
 interface MenuItem {
   id: number;
@@ -246,6 +250,90 @@ export default function MenuSection({
     return cartItem ? cartItem.quantity : 0;
   };
 
+  // =========================================================
+  // FAVORITES
+  // "menu-" prefix isliye taaki Home page ke item IDs aur
+  // FullMenu page ke item IDs aapas mein overlap na karein.
+  // =========================================================
+
+  const [favoriteKeys, setFavoriteKeys] = useState<string[]>([]);
+
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem("access_token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (!user.email) return;
+
+    fetch(
+      `${API_URL}/favorites/${encodeURIComponent(user.email)}`,
+      { headers: getAuthHeaders() }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setFavoriteKeys(
+            data.map((favorite: { food_key: string }) => favorite.food_key)
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggleFavorite = async (item: MenuItem) => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (!user.email) {
+      alert("Please login to save favorites");
+      return;
+    }
+
+    const foodKey = `menu-${item.id}`;
+    const isFavorited = favoriteKeys.includes(foodKey);
+
+    try {
+      if (isFavorited) {
+        const response = await fetch(
+          `${API_URL}/favorites/${encodeURIComponent(foodKey)}`,
+          {
+            method: "DELETE",
+            headers: getAuthHeaders(),
+          }
+        );
+
+        if (response.ok) {
+          setFavoriteKeys((prev) =>
+            prev.filter((key) => key !== foodKey)
+          );
+        }
+      } else {
+        const response = await fetch(`${API_URL}/favorites`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({
+            user_email: user.email,
+            food_key: foodKey,
+            food_name: item.name,
+            price: item.price,
+            image: item.image,
+          }),
+        });
+
+        if (response.ok) {
+          setFavoriteKeys((prev) => [...prev, foodKey]);
+        }
+      }
+    } catch {
+      alert("Unable to update favorites");
+    }
+  };
+
   const handleAddClick = (item: MenuItem) => {
     setCartItems((prevCartItems) => {
       const existing = prevCartItems.find(
@@ -399,12 +487,22 @@ export default function MenuSection({
                 </div>
 
                 <button
-                  aria-label={`Add ${item.name} to favorites`}
+                  onClick={() => toggleFavorite(item)}
+                  aria-label={
+                    favoriteKeys.includes(`menu-${item.id}`)
+                      ? `Remove ${item.name} from favorites`
+                      : `Add ${item.name} to favorites`
+                  }
                   className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 dark:bg-slate-900/90 flex items-center justify-center shadow hover:scale-110 transition"
                 >
                   <Heart
                     size={18}
                     className="text-red-500"
+                    fill={
+                      favoriteKeys.includes(`menu-${item.id}`)
+                        ? "currentColor"
+                        : "none"
+                    }
                   />
                 </button>
 

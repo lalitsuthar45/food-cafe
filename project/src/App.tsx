@@ -40,6 +40,10 @@ const AdminReservations = lazy(
   () => import("./components/AdminReservations")
 );
 
+const Favourites = lazy(
+  () => import("./components/Favourites")
+);
+
 // =========================================================
 // PAGE LOADER
 // =========================================================
@@ -246,6 +250,22 @@ function AppRoutes() {
                 <>
                   <Navbar cartItems={cartItems} />
                   <Reservation />
+                </>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* FAVOURITES */}
+          <Route
+            path="/favourites"
+            element={
+              <ProtectedRoute>
+                <>
+                  <Navbar cartItems={cartItems} />
+                  <Favourites
+                    cartItems={cartItems}
+                    setCartItems={setCartItems}
+                  />
                 </>
               </ProtectedRoute>
             }
