@@ -48,8 +48,6 @@ const Favourites = lazy(
   () => import("./components/Favourites")
 );
 
-<<<<<<< HEAD
-=======
 const FoodDetail = lazy(
   () => import("./components/FoodDetail")
 );
@@ -64,7 +62,6 @@ type HomePageProps = {
   isMenuOpen: boolean;
 };
 
->>>>>>> c77843d (update home page)
 // =========================================================
 // PAGE LOADER
 // =========================================================
@@ -321,8 +318,6 @@ function AppRoutes() {
             }
           />
 
-<<<<<<< HEAD
-=======
           {/* FOOD DETAIL */}
           <Route
             path="/food/:foodKey"
@@ -339,7 +334,6 @@ function AppRoutes() {
             }
           />
 
->>>>>>> c77843d (update home page)
           {/* ADMIN DASHBOARD */}
           <Route
             path="/admin"
