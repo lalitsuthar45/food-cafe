@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Coffee,
   UtensilsCrossed,
@@ -11,6 +12,7 @@ import {
   Flame,
   Minus,
   Plus,
+  Search,
 } from "lucide-react";
 import type { CartItem } from "./FullMenu";
 
@@ -37,7 +39,9 @@ export default function MenuSection({
   cartItems,
   setCartItems,
 }: Props) {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("starters");
+  const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
 
   const categories = [
@@ -245,6 +249,53 @@ export default function MenuSection({
     }, 1800);
   };
 
+  // =========================================================
+  // SEARCH + DISPLAYED ITEMS
+  // Search box typed hone par saare categories mein se dhoondte
+  // hain, khaali hone par sirf activeCategory ke items dikhte
+  // hain (jaisa pehle tha).
+  // =========================================================
+
+  const allItems: MenuItem[] = Object.values(menuItems).flat();
+
+  const displayedItems =
+    search.trim().length > 0
+      ? allItems.filter(
+          (item) =>
+            item.name
+              .toLowerCase()
+              .includes(search.trim().toLowerCase()) ||
+            item.description
+              .toLowerCase()
+              .includes(search.trim().toLowerCase())
+        )
+      : menuItems[activeCategory];
+
+  const getCategoryThumb = (categoryId: string) => {
+    const firstItem = menuItems[categoryId]?.[0];
+    return firstItem ? firstItem.image : "";
+  };
+
+  // =========================================================
+  // OPEN FOOD DETAIL PAGE
+  // =========================================================
+
+  const openFoodDetail = (item: MenuItem) => {
+    navigate(`/food/menu-${item.id}`, {
+      state: {
+        item: {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          image: item.image,
+          rating: item.rating,
+          tag: item.tag,
+        },
+      },
+    });
+  };
+
   const getCartQuantity = (id: number) => {
     const cartItem = cartItems.find((ci) => ci.id === id);
     return cartItem ? cartItem.quantity : 0;
@@ -415,7 +466,7 @@ export default function MenuSection({
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* HEADER */}
-        <div className="text-center mb-14">
+        <div className="text-center mb-8">
 
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 dark:bg-slate-800/70 shadow text-orange-700 dark:text-orange-300 font-semibold mb-5">
             <Flame size={18} />
@@ -435,41 +486,90 @@ export default function MenuSection({
 
         </div>
 
-        {/* CATEGORIES */}
-        <div className="flex flex-wrap justify-center gap-3 mb-14">
+        {/* SEARCH BAR */}
+        <div className="max-w-xl mx-auto mb-10">
+          <div className="relative">
+            <Search
+              size={20}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500"
+            />
 
-          {categories.map((category) => {
-
-            const Icon = category.icon;
-
-            return (
-              <button
-                key={category.id}
-                onClick={() =>
-                  setActiveCategory(category.id)
-                }
-                className={`flex items-center gap-2 px-5 py-3 rounded-full font-bold transition-all duration-300 ${
-                  activeCategory === category.id
-                    ? "bg-gradient-to-r from-orange-600 to-red-500 text-white shadow-xl scale-105"
-                    : "bg-white/80 dark:bg-slate-800/80 text-gray-700 dark:text-gray-200 hover:bg-orange-50 dark:hover:bg-slate-700 shadow"
-                }`}
-              >
-                <Icon size={20} />
-                {category.name}
-              </button>
-            );
-          })}
-
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search for dishes..."
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-orange-100 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-orange-400 shadow-md"
+            />
+          </div>
         </div>
+
+        {/* CATEGORIES — circular tiles, Domino's style */}
+        {search.trim().length === 0 && (
+          <div className="mb-10">
+
+            <p className="text-center text-gray-500 dark:text-gray-400 font-semibold mb-5">
+              What are you craving for?
+            </p>
+
+            <div className="flex justify-center flex-wrap gap-6 sm:gap-8">
+
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveCategory(category.id)}
+                  className="flex flex-col items-center gap-2 group"
+                >
+                  <div
+                    className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden shadow-lg transition-all duration-300 ${
+                      activeCategory === category.id
+                        ? "ring-4 ring-orange-500 scale-105"
+                        : "ring-2 ring-white dark:ring-slate-800 group-hover:scale-105"
+                    }`}
+                  >
+                    <img
+                      src={getCategoryThumb(category.id)}
+                      alt={category.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <span
+                    className={`text-sm font-bold ${
+                      activeCategory === category.id
+                        ? "text-orange-600"
+                        : "text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {category.name}
+                  </span>
+                </button>
+              ))}
+
+            </div>
+          </div>
+        )}
 
         {/* FOOD GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 
-          {menuItems[activeCategory].map((item) => (
+          {displayedItems.length === 0 && (
+            <p className="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">
+              No dishes matched "{search}".
+            </p>
+          )}
+
+          {displayedItems.map((item) => (
 
             <div
               key={item.id}
-              className="group glass-card hover-lift rounded-3xl overflow-hidden"
+              onClick={() => openFoodDetail(item)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") openFoodDetail(item);
+              }}
+              className="group glass-card hover-lift rounded-3xl overflow-hidden cursor-pointer"
             >
 
               {/* IMAGE */}
@@ -487,7 +587,14 @@ export default function MenuSection({
                 </div>
 
                 <button
+<<<<<<< HEAD
                   onClick={() => toggleFavorite(item)}
+=======
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(item);
+                  }}
+>>>>>>> c77843d (update home page)
                   aria-label={
                     favoriteKeys.includes(`menu-${item.id}`)
                       ? `Remove ${item.name} from favorites`
@@ -550,7 +657,10 @@ export default function MenuSection({
 
                     <button
                       type="button"
-                      onClick={() => handleAddClick(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddClick(item);
+                      }}
                       className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-1 transition-all"
                     >
                       <ShoppingCart size={18} />
@@ -563,9 +673,10 @@ export default function MenuSection({
 
                       <button
                         type="button"
-                        onClick={() =>
-                          decreaseCartQuantity(item.id)
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          decreaseCartQuantity(item.id);
+                        }}
                         aria-label={`Decrease quantity of ${item.name}`}
                         className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
                       >
@@ -578,9 +689,10 @@ export default function MenuSection({
 
                       <button
                         type="button"
-                        onClick={() =>
-                          increaseCartQuantity(item)
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          increaseCartQuantity(item);
+                        }}
                         aria-label={`Increase quantity of ${item.name}`}
                         className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
                       >

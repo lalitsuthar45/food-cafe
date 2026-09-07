@@ -7,7 +7,14 @@ import {
   useLocation,
 } from "react-router-dom";
 
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import MenuSection from "./components/MenuSection";
+import About from "./components/About";
+import Gallery from "./components/Gallery";
+import Contact from "./components/Contact";
 import Loginpage from "./components/Loginpage";
+import Registerpage from "./components/Registerpage";
 
 import { AuthProvider, useAuth } from "./components/AuthContext";
 import CookieConsent from "./components/CookieConsent";
@@ -19,14 +26,11 @@ import type { CartItem } from "./components/FullMenu";
 // LAZY COMPONENTS
 // =========================================================
 
-const Navbar = lazy(() => import("./components/Navbar"));
-const HomePage = lazy(() => import("./components/HomePage"));
 const FullMenu = lazy(() => import("./components/FullMenu"));
 const CartPage = lazy(() => import("./components/CartPage"));
 const Profile = lazy(() => import("./components/Profile"));
 const Reservation = lazy(() => import("./components/Reservation"));
 const MyOrders = lazy(() => import("./components/MyOrders"));
-const Registerpage = lazy(() => import("./components/Registerpage"));
 
 const AdminDashboard = lazy(
   () => import("./components/AdminDashboard")
@@ -44,6 +48,23 @@ const Favourites = lazy(
   () => import("./components/Favourites")
 );
 
+<<<<<<< HEAD
+=======
+const FoodDetail = lazy(
+  () => import("./components/FoodDetail")
+);
+
+// =========================================================
+// TYPES
+// =========================================================
+
+type HomePageProps = {
+  cartItems: CartItem[];
+  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  isMenuOpen: boolean;
+};
+
+>>>>>>> c77843d (update home page)
 // =========================================================
 // PAGE LOADER
 // =========================================================
@@ -72,10 +93,39 @@ function ScrollToTop() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // SPA hai, isliye har route change pe Google Analytics ko
+    // manually batana padta hai ki naya "page view" hua hai.
+    // (Agar user ne consent nahi diya, trackPageView khud hi
+    // kuch nahi karega.)
     trackPageView(location.pathname);
   }, [location.pathname]);
 
   return null;
+}
+
+// =========================================================
+// HOME PAGE
+// =========================================================
+
+function HomePage({
+  cartItems,
+  setCartItems,
+  isMenuOpen,
+}: HomePageProps) {
+  return (
+    <main
+      className={`page-transition pt-16 transition-transform duration-300 ${
+        isMenuOpen ? "translate-x-64" : "translate-x-0"
+      }`}
+    >
+      <Hero />
+      <MenuSection cartItems={cartItems} setCartItems={setCartItems} />
+      <About />
+      <Gallery />
+      <Contact />
+    </main>
+  );
 }
 
 // =========================================================
@@ -271,6 +321,25 @@ function AppRoutes() {
             }
           />
 
+<<<<<<< HEAD
+=======
+          {/* FOOD DETAIL */}
+          <Route
+            path="/food/:foodKey"
+            element={
+              <ProtectedRoute>
+                <>
+                  <Navbar cartItems={cartItems} />
+                  <FoodDetail
+                    cartItems={cartItems}
+                    setCartItems={setCartItems}
+                  />
+                </>
+              </ProtectedRoute>
+            }
+          />
+
+>>>>>>> c77843d (update home page)
           {/* ADMIN DASHBOARD */}
           <Route
             path="/admin"

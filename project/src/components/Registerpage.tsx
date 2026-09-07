@@ -293,7 +293,7 @@ function Registerpage() {
               <div className="relative field-wrap">
                 <User
                   size={18}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#B08968]"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#7A5533]"
                 />
 
                 <input
@@ -305,7 +305,7 @@ function Registerpage() {
                   disabled={loading}
                   autoComplete="name"
                   required
-                  className="w-full pl-7 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#B8A896] focus:border-orange-500 transition-colors disabled:opacity-60"
+                  className="w-full pl-7 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#7A6A5E] focus:border-orange-500 transition-colors disabled:opacity-60"
                 />
               </div>
             </div>
@@ -320,7 +320,7 @@ function Registerpage() {
               <div className="relative field-wrap">
                 <Mail
                   size={18}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#B08968]"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#7A5533]"
                 />
 
                 <input
@@ -332,7 +332,7 @@ function Registerpage() {
                   disabled={loading}
                   autoComplete="email"
                   required
-                  className="w-full pl-7 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#B8A896] focus:border-orange-500 transition-colors disabled:opacity-60"
+                  className="w-full pl-7 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#7A6A5E] focus:border-orange-500 transition-colors disabled:opacity-60"
                 />
               </div>
             </div>
@@ -347,7 +347,7 @@ function Registerpage() {
               <div className="relative field-wrap">
                 <Lock
                   size={18}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#B08968]"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#7A5533]"
                 />
 
                 <input
@@ -359,7 +359,7 @@ function Registerpage() {
                   disabled={loading}
                   autoComplete="new-password"
                   required
-                  className="w-full pl-7 pr-9 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#B8A896] focus:border-orange-500 transition-colors disabled:opacity-60"
+                  className="w-full pl-7 pr-9 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#7A6A5E] focus:border-orange-500 transition-colors disabled:opacity-60"
                 />
 
                 <button
@@ -424,7 +424,7 @@ function Registerpage() {
                 type="button"
                 onClick={() => navigate("/")}
                 disabled={loading}
-                className="text-orange-600 font-semibold hover:text-orange-700 disabled:opacity-50"
+                className="text-orange-800 font-semibold hover:text-orange-900 disabled:opacity-50"
               >
                 Log in
               </button>
