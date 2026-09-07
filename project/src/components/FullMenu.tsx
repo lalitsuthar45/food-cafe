@@ -34,24 +34,7 @@ export type FoodItem = {
   category: string;
 };
 
-type FullMenuProps = {
-  cartItems: CartItem[];
-  setCartItems: Dispatch<SetStateAction<CartItem[]>>;
-};
-
-type SortType = "default" | "low" | "high" | "az";
-
-export default function FullMenu({
-  cartItems,
-  setCartItems,
-}: FullMenuProps) {
-  const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [sortBy, setSortBy] = useState<SortType>("default");
-  const [toast, setToast] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-
-  const menu: FoodItem[] = [
+export const fullMenuItems: FoodItem[] = [
     {
       id: 1,
       name: "Veg Burger",
@@ -1104,6 +1087,25 @@ export default function FullMenu({
       category: "Dessert",
     },
   ];
+
+type FullMenuProps = {
+  cartItems: CartItem[];
+  setCartItems: Dispatch<SetStateAction<CartItem[]>>;
+};
+
+type SortType = "default" | "low" | "high" | "az";
+
+export default function FullMenu({
+  cartItems,
+  setCartItems,
+}: FullMenuProps) {
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [sortBy, setSortBy] = useState<SortType>("default");
+  const [toast, setToast] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const menu = fullMenuItems;
 
   const categories = useMemo(() => {
     return [

@@ -14,7 +14,8 @@ import {
   Plus,
   Search,
 } from "lucide-react";
-import type { CartItem } from "./FullMenu";
+import type { CartItem, FoodItem } from "./FullMenu";
+import { fullMenuItems } from "./FullMenu";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -92,7 +93,7 @@ export default function MenuSection({
       {
         id: 3,
         name: "Noodles",
-        description: "Saucy spicy stir-fried strand",
+        description: "Saucy spicy stir-fried strands",
         price: 349,
         rating: 4.6,
         tag: "Popular",
@@ -135,7 +136,7 @@ export default function MenuSection({
       {
         id: 7,
         name: "Dal Bati",
-        description: "Smoky lentils with a baked wheat balls",
+        description: "Smoky lentils with baked wheat balls",
         price: 279,
         rating: 4.7,
         tag: "Rajasthani",
@@ -249,31 +250,120 @@ export default function MenuSection({
     }, 1800);
   };
 
+  // Search na ho to activeCategory ke items dikhte hain
+  const displayedItems: MenuItem[] = menuItems[activeCategory];
+
   // =========================================================
   // SEARCH + DISPLAYED ITEMS
-  // Search box typed hone par saare categories mein se dhoondte
-  // hain, khaali hone par sirf activeCategory ke items dikhte
-  // hain (jaisa pehle tha).
+  // Search box typed hone par Full Menu ke POORE catalog (105+
+  // items) mein se dhoondte hain, na ki sirf home page ke
+  // chhote menu mein — kyunki user zyadatar dishes Full Menu
+  // page mein hi milti hain.
   // =========================================================
 
-  const allItems: MenuItem[] = Object.values(menuItems).flat();
-
-  const displayedItems =
+  const searchResults: FoodItem[] =
     search.trim().length > 0
-      ? allItems.filter(
+      ? fullMenuItems.filter(
           (item) =>
             item.name
               .toLowerCase()
               .includes(search.trim().toLowerCase()) ||
             item.description
               .toLowerCase()
+              .includes(search.trim().toLowerCase()) ||
+            item.category
+              .toLowerCase()
               .includes(search.trim().toLowerCase())
         )
-      : menuItems[activeCategory];
+      : [];
+
+  const isSearching = search.trim().length > 0;
 
   const getCategoryThumb = (categoryId: string) => {
     const firstItem = menuItems[categoryId]?.[0];
     return firstItem ? firstItem.image : "";
+  };
+
+  // =========================================================
+  // SEARCH RESULT: CART + FAVORITE HELPERS
+  // Full Menu ke items "fullmenu-" prefix use karte hain
+  // (jaisa FullMenu.tsx aur favorites mein already hai), taaki
+  // home page ke apne items (id 1-16) se overlap na ho.
+  // =========================================================
+
+  const getSearchItemCartQuantity = (id: number) => {
+    const cartItem = cartItems.find((ci) => ci.id === id);
+    return cartItem ? cartItem.quantity : 0;
+  };
+
+  const addSearchItemToCart = (item: FoodItem) => {
+    setCartItems((prevCartItems) => {
+      const existing = prevCartItems.find(
+        (cartItem) => cartItem.id === item.id
+      );
+
+      if (existing) {
+        return prevCartItems.map((cartItem) =>
+          cartItem.id === item.id
+            ? {
+                ...cartItem,
+                quantity: cartItem.quantity + 1,
+                image: item.image,
+              }
+            : cartItem
+        );
+      }
+
+      return [
+        ...prevCartItems,
+        {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          quantity: 1,
+        },
+      ];
+    });
+
+    showToast(`${item.name} added to cart`);
+  };
+
+  const increaseSearchItemQuantity = (item: FoodItem) => {
+    setCartItems((prevCartItems) =>
+      prevCartItems.map((cartItem) =>
+        cartItem.id === item.id
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem
+      )
+    );
+  };
+
+  const decreaseSearchItemQuantity = (id: number) => {
+    setCartItems((prevCartItems) =>
+      prevCartItems
+        .map((cartItem) =>
+          cartItem.id === id
+            ? { ...cartItem, quantity: cartItem.quantity - 1 }
+            : cartItem
+        )
+        .filter((cartItem) => cartItem.quantity > 0)
+    );
+  };
+
+  const openSearchItemDetail = (item: FoodItem) => {
+    navigate(`/food/fullmenu-${item.id}`, {
+      state: {
+        item: {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          image: item.image,
+          category: item.category,
+        },
+      },
+    });
   };
 
   // =========================================================
@@ -551,7 +641,165 @@ export default function MenuSection({
         )}
 
         {/* FOOD GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {isSearching ? (
+
+          /* =====================================================
+             SEARCH RESULTS — Full Menu ke poore catalog se
+          ===================================================== */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+
+            {searchResults.length === 0 && (
+              <p className="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">
+                No dishes matched "{search}".
+              </p>
+            )}
+
+            {searchResults.map((item) => (
+
+              <div
+                key={`search-${item.id}`}
+                onClick={() => openSearchItemDetail(item)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") openSearchItemDetail(item);
+                }}
+                className="group glass-card hover-lift rounded-3xl overflow-hidden cursor-pointer"
+              >
+
+                {/* IMAGE */}
+                <div className="relative h-52 overflow-hidden">
+
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+
+                  <div className="absolute top-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow">
+                    {item.category}
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite({
+                        id: item.id,
+                        name: item.name,
+                        description: item.description,
+                        price: item.price,
+                        image: item.image,
+                        rating: 0,
+                        tag: item.category,
+                      });
+                    }}
+                    aria-label={
+                      favoriteKeys.includes(`menu-${item.id}`)
+                        ? `Remove ${item.name} from favorites`
+                        : `Add ${item.name} to favorites`
+                    }
+                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 dark:bg-slate-900/90 flex items-center justify-center shadow hover:scale-110 transition"
+                  >
+                    <Heart
+                      size={18}
+                      className="text-red-500"
+                      fill={
+                        favoriteKeys.includes(`fullmenu-${item.id}`)
+                          ? "currentColor"
+                          : "none"
+                      }
+                    />
+                  </button>
+
+                </div>
+
+                {/* CONTENT */}
+                <div className="p-5">
+
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h3 className="text-xl font-extrabold text-gray-900 dark:text-white">
+                      {item.name}
+                    </h3>
+
+                    <span className="text-xl font-extrabold text-orange-600">
+                      ₹{item.price}
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-5 min-h-[40px] line-clamp-2">
+                    {item.description}
+                  </p>
+
+                  {/* ADD / QUANTITY */}
+                  <div className="flex items-center gap-2">
+
+                    {getSearchItemCartQuantity(item.id) === 0 ? (
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addSearchItemToCart(item);
+                        }}
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-1 transition-all"
+                      >
+                        <ShoppingCart size={18} />
+                        Add
+                      </button>
+
+                    ) : (
+
+                      <div className="w-full flex items-center justify-between rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-100 dark:border-slate-700 overflow-hidden">
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            decreaseSearchItemQuantity(item.id);
+                          }}
+                          aria-label={`Decrease quantity of ${item.name}`}
+                          className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
+                        >
+                          <Minus size={16} />
+                        </button>
+
+                        <span className="font-bold text-gray-900 dark:text-white">
+                          {getSearchItemCartQuantity(item.id)}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            increaseSearchItemQuantity(item);
+                          }}
+                          aria-label={`Increase quantity of ${item.name}`}
+                          className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
+                        >
+                          <Plus size={16} />
+                        </button>
+
+                      </div>
+
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        ) : (
+
+          /* =====================================================
+             ACTIVE CATEGORY (default browse view)
+          ===================================================== */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 
           {displayedItems.length === 0 && (
             <p className="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">
@@ -586,11 +834,11 @@ export default function MenuSection({
                   {item.tag}
                 </div>
 
-              <button
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleFavorite(item);
-                }}
+                  }}
                   aria-label={
                     favoriteKeys.includes(`menu-${item.id}`)
                       ? `Remove ${item.name} from favorites`
@@ -707,7 +955,9 @@ export default function MenuSection({
 
           ))}
 
-        </div>
+          </div>
+
+        )}
 
         {/* FULL MENU BUTTON */}
         <div className="text-center mt-14">
