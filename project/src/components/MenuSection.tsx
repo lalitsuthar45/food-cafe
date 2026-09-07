@@ -92,7 +92,7 @@ export default function MenuSection({
       {
         id: 3,
         name: "Noodles",
-        description: "Saucy spicy stir-fried strands",
+        description: "Saucy spicy stir-fried strand",
         price: 349,
         rating: 4.6,
         tag: "Popular",
