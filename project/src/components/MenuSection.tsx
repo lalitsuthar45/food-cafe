@@ -135,7 +135,7 @@ export default function MenuSection({
       {
         id: 7,
         name: "Dal Bati",
-        description: "Smoky lentils with baked wheat balls",
+        description: "Smoky lentils with a baked wheat balls",
         price: 279,
         rating: 4.7,
         tag: "Rajasthani",
