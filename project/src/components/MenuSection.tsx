@@ -586,15 +586,11 @@ export default function MenuSection({
                   {item.tag}
                 </div>
 
-                <button
-<<<<<<< HEAD
-                  onClick={() => toggleFavorite(item)}
-=======
+              <button
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleFavorite(item);
-                  }}
->>>>>>> c77843d (update home page)
+                }}
                   aria-label={
                     favoriteKeys.includes(`menu-${item.id}`)
                       ? `Remove ${item.name} from favorites`
