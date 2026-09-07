@@ -13,6 +13,7 @@ import MenuSection from "./components/MenuSection";
 import About from "./components/About";
 import Gallery from "./components/Gallery";
 import Contact from "./components/Contact";
+import Footer from "./components/Footer";
 import Loginpage from "./components/Loginpage";
 import Registerpage from "./components/Registerpage";
 
@@ -121,6 +122,7 @@ function HomePage({
       <About />
       <Gallery />
       <Contact />
+      <Footer />
     </main>
   );
 }
