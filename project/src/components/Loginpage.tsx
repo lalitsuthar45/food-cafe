@@ -72,6 +72,7 @@ function Loginpage() {
   const [loading, setLoading] = useState(false);
   const [taglineIndex, setTaglineIndex] = useState(0);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -125,8 +126,10 @@ function Loginpage() {
   ) => {
     login(user, accessToken, rememberMe);
     clearAttempts();
-    alert(message);
-    navigate("/home", { replace: true });
+    setSuccessMessage(message || "Login successful!");
+    window.setTimeout(() => {
+      navigate("/home", { replace: true });
+    }, 1000);
   };
 
   // =====================================================
@@ -245,6 +248,22 @@ function Loginpage() {
 
   return (
     <main className="min-h-screen flex items-stretch bg-[#FFF8F0]">
+      {successMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl px-7 py-5 shadow-2xl border border-green-100 text-center animate-[fadeInUp_0.35s_ease-out]">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 text-2xl">
+              ✓
+            </div>
+            <p className="text-lg font-semibold text-[#2A1810]">
+              {successMessage}
+            </p>
+            <p className="mt-1 text-sm text-[#7A6A5E]">
+              Opening your account...
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="w-full grid lg:grid-cols-[1fr_1.1fr]">
 
         {/* =================================================
