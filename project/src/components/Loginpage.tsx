@@ -30,6 +30,37 @@ const TAGLINES = [
   "Chai that actually tastes like home.",
 ];
 
+// =========================================================
+// RATE LIMITING (client-side throttle on the login button)
+// Max 5 attempts within a 60 second window, then the button
+// disables with a countdown until the oldest attempt expires.
+// =========================================================
+
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const ATTEMPTS_KEY = "login_attempts";
+
+function getRecentAttempts(): number[] {
+  try {
+    const raw = localStorage.getItem(ATTEMPTS_KEY);
+    const attempts: number[] = raw ? JSON.parse(raw) : [];
+    const cutoff = Date.now() - RATE_LIMIT_WINDOW_MS;
+    return attempts.filter((timestamp) => timestamp > cutoff);
+  } catch {
+    return [];
+  }
+}
+
+function recordAttempt() {
+  const attempts = getRecentAttempts();
+  attempts.push(Date.now());
+  localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts));
+}
+
+function clearAttempts() {
+  localStorage.removeItem(ATTEMPTS_KEY);
+}
+
 function Loginpage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -37,8 +68,10 @@ function Loginpage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [taglineIndex, setTaglineIndex] = useState(0);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -49,6 +82,39 @@ function Loginpage() {
   }, []);
 
   // =====================================================
+  // RATE LIMIT COUNTDOWN
+  // Har second check karta hai ki abhi bhi rate-limited hai
+  // ya nahi, aur button disable/countdown update karta hai.
+  // =====================================================
+
+  useEffect(() => {
+    const updateCooldown = () => {
+      const attempts = getRecentAttempts();
+
+      if (attempts.length < RATE_LIMIT_MAX) {
+        setCooldownSeconds(0);
+        return;
+      }
+
+      const oldest = Math.min(...attempts);
+      const unlockAt = oldest + RATE_LIMIT_WINDOW_MS;
+      const remaining = Math.max(
+        0,
+        Math.ceil((unlockAt - Date.now()) / 1000)
+      );
+
+      setCooldownSeconds(remaining);
+    };
+
+    updateCooldown();
+
+    const interval = window.setInterval(updateCooldown, 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const isRateLimited = cooldownSeconds > 0;
+
+  // =====================================================
   // SAVE AUTHENTICATION
   // =====================================================
 
@@ -57,7 +123,8 @@ function Loginpage() {
     accessToken: string,
     message: string
   ) => {
-    login(user, accessToken);
+    login(user, accessToken, rememberMe);
+    clearAttempts();
     alert(message);
     navigate("/home", { replace: true });
   };
@@ -119,6 +186,13 @@ function Loginpage() {
   ) => {
     e.preventDefault();
 
+    if (isRateLimited) {
+      alert(
+        `Too many login attempts. Please try again in ${cooldownSeconds}s.`
+      );
+      return;
+    }
+
     const cleanEmail = email.trim();
     const cleanPassword = password;
 
@@ -128,6 +202,7 @@ function Loginpage() {
     }
 
     setLoading(true);
+    recordAttempt();
 
     try {
       const response = await fetch(`${API_URL}/login`, {
@@ -259,7 +334,7 @@ function Loginpage() {
               <div className="relative field-wrap">
                 <Mail
                   size={18}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#7A5533]"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#8B6F52]"
                 />
 
                 <input
@@ -269,14 +344,14 @@ function Loginpage() {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                   autoComplete="email"
-                  className="w-full pl-7 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#7A6A5E] focus:border-orange-500 transition-colors disabled:opacity-60"
+                  className="w-full pl-7 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#B8A896] focus:border-orange-500 transition-colors disabled:opacity-60"
                 />
               </div>
             </div>
 
             {/* PASSWORD */}
 
-            <div className="mb-8">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-[#5C4A3D] mb-2">
                 Password
               </label>
@@ -284,7 +359,7 @@ function Loginpage() {
               <div className="relative field-wrap">
                 <Lock
                   size={18}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#7A5533]"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#8B6F52]"
                 />
 
                 <input
@@ -294,7 +369,7 @@ function Loginpage() {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                   autoComplete="current-password"
-                  className="w-full pl-7 pr-9 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#7A6A5E] focus:border-orange-500 transition-colors disabled:opacity-60"
+                  className="w-full pl-7 pr-9 pb-3 bg-transparent border-b-2 border-[#E8DDD0] outline-none text-[#2A1810] placeholder:text-[#B8A896] focus:border-orange-500 transition-colors disabled:opacity-60"
                 />
 
                 <button
@@ -315,15 +390,43 @@ function Loginpage() {
               </div>
             </div>
 
+            {/* REMEMBER ME */}
+
+            <label className="flex items-center gap-2.5 mb-7 cursor-pointer select-none w-fit">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={loading}
+                className="w-4 h-4 rounded border-[#E8DDD0] text-orange-600 focus:ring-orange-500 accent-orange-600 cursor-pointer"
+              />
+              <span className="text-sm text-[#5C4A3D]">
+                Remember me on this device
+              </span>
+            </label>
+
+            {/* RATE LIMIT NOTICE */}
+
+            {isRateLimited && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-4">
+                Too many login attempts. Please try again in{" "}
+                {cooldownSeconds}s.
+              </p>
+            )}
+
             {/* LOGIN BUTTON */}
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isRateLimited}
               className="relative w-full overflow-hidden bg-gradient-to-r from-orange-600 to-red-500 text-white py-3.5 rounded-2xl font-semibold shadow-lg shadow-orange-600/20 disabled:opacity-70 disabled:cursor-not-allowed group"
             >
               <span className="relative z-10">
-                {loading ? "Logging in..." : "Log in"}
+                {isRateLimited
+                  ? `Try again in ${cooldownSeconds}s`
+                  : loading
+                  ? "Logging in..."
+                  : "Log in"}
               </span>
               <span className="shine" />
             </button>
@@ -355,7 +458,7 @@ function Loginpage() {
                 type="button"
                 onClick={() => navigate("/register")}
                 disabled={loading}
-                className="text-orange-800 font-semibold hover:text-orange-900 disabled:opacity-50"
+                className="text-orange-600 font-semibold hover:text-orange-700 disabled:opacity-50"
               >
                 Create an account
               </button>

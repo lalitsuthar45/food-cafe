@@ -6,6 +6,7 @@ import {
   IndianRupee,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getAuthHeaders } from "./authStorage";
 
 type DashboardData = {
   total_users: number;
@@ -43,15 +44,6 @@ function AdminDashboard() {
   // (Depends(get_current_admin)). Token na bheja jaye to
   // FastAPI "Not authenticated" bhej deta hai.
   // =========================
-
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("access_token");
-
-    return token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
-  };
-
   useEffect(() => {
     const fetchDashboard = async () => {
       try {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getAuthHeaders } from "./authStorage";
 
 type Reservation = {
   id: number;
@@ -38,15 +39,6 @@ function AdminReservations() {
   // (Depends(get_current_admin)). Token na bheja jaye to
   // FastAPI "Not authenticated" bhej deta hai.
   // =========================
-
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("access_token");
-
-    return token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
-  };
-
   const fetchReservations = async () => {
     try {
       const response = await fetch(`${getApiUrl()}/admin/reservations`, {

@@ -12,6 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
+import { getAuthHeaders, getAuthUser } from "./authStorage";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -1230,14 +1231,8 @@ export default function FullMenu({
   // =========================================================
 
   const [favoriteKeys, setFavoriteKeys] = useState<string[]>([]);
-
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("access_token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const user = getAuthUser();
 
     if (!user.email) return;
 
@@ -1257,7 +1252,7 @@ export default function FullMenu({
   }, []);
 
   const toggleFavorite = async (item: FoodItem) => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const user = getAuthUser();
 
     if (!user.email) {
       alert("Please login to save favorites");

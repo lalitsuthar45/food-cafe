@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getAuthHeaders } from "./authStorage";
 
 type OrderItem = {
   food_name: string;
@@ -53,15 +54,6 @@ function AdminOrders() {
   // (Depends(get_current_admin)). Token na bheja jaye to
   // FastAPI "Not authenticated" bhej deta hai.
   // =========================
-
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("access_token");
-
-    return token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
-  };
-
   const fetchOrders = async () => {
     try {
       const response = await fetch(`${getApiUrl()}/admin/orders`, {

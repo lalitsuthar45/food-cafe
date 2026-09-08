@@ -43,9 +43,9 @@ export default function CookieConsent() {
           </div>
 
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Hum aapke experience ko behtar banane aur website traffic
-            samajhne ke liye cookies (Google Analytics) use karte hain.
-            "Accept" pe click karke aap iske liye sehmat hote hain.
+            We use cookies to improve your experience and understand
+            website traffic (Google Analytics). By clicking "Accept",
+            you agree to our use of cookies.
           </p>
         </div>
 

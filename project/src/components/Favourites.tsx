@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import type { CartItem } from "./FullMenu";
+import { getAuthHeaders, getAuthUser } from "./authStorage";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -24,13 +25,7 @@ function Favourites({ cartItems, setCartItems }: FavouritesProps) {
   const [loading, setLoading] = useState(true);
   const [removingKey, setRemovingKey] = useState<string | null>(null);
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("access_token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
+  const user = getAuthUser();
   const fetchFavorites = async () => {
     if (!user.email) {
       setFavorites([]);

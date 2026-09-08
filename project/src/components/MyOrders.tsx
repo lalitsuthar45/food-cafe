@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getAuthHeaders, getAuthUser } from "./authStorage";
 import {
   ChevronDown,
   ChevronUp,
@@ -11,7 +12,6 @@ import {
   CheckCircle2,
   Package,
 } from "lucide-react";
-
 type OrderItem = {
   food_name: string;
   price: number;
@@ -183,7 +183,7 @@ function MyOrders() {
   // Currently opened food items
   const [openItems, setOpenItems] = useState<string[]>([]);
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = getAuthUser();
 
   const getApiUrl = () => {
     if (
@@ -201,16 +201,7 @@ function MyOrders() {
   // Backend ke /orders route ko login token chahiye
   // (Depends(get_current_user)). Token na bheja jaye to
   // FastAPI seedha "Not authenticated" bhej deta hai.
-  // =========================
-
- const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("access_token");
-
-    return token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
-  };
-
+   // =========================
   const fetchOrders = async () => {
     if (!user.email) {
       setOrders([]);

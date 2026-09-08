@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { getAuthHeaders, getAuthUser } from "./authStorage";
 
 export type CartItem = {
   id: number;
@@ -78,15 +79,6 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
   // (Depends(get_current_user)). Token na bheja jaye to
   // FastAPI "Not authenticated" bhej deta hai.
   // =========================
-
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("access_token");
-
-    return token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
-  };
-
   // =========================
   // REMOVE ITEM
   // =========================
@@ -298,9 +290,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       return;
     }
 
-    const user = JSON.parse(
-      localStorage.getItem("user") || "{}"
-    );
+    const user = getAuthUser();
 
     if (!user.email) {
       alert("User not found. Please login again.");

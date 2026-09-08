@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getAuthHeaders, getAuthUser } from "./authStorage";
 
 type ReservationItem = {
   id: number;
@@ -15,7 +16,7 @@ type ReservationItem = {
 };
 
 function Reservation() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = getAuthUser();
 
   const [formData, setFormData] = useState({
     name: user.name || "",
@@ -50,15 +51,6 @@ function Reservation() {
   // chahiye (Depends(get_current_user)). Token na bheja
   // jaye to FastAPI "Not authenticated" bhej deta hai.
   // =========================
-
- const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("access_token");
-
-    return token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
-  };
-
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement

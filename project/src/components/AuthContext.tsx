@@ -5,6 +5,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  getAuthToken,
+  setAuthSession,
+  clearAuthSession,
+} from "./authStorage";
 
 // =========================================================
 // API URL
@@ -28,7 +33,11 @@ export type User = {
 type AuthContextType = {
   currentUser: User | null;
   authLoading: boolean;
-  login: (user: User, accessToken: string) => void;
+  login: (
+    user: User,
+    accessToken: string,
+    rememberMe?: boolean
+  ) => void;
   logout: () => void;
 };
 
@@ -46,14 +55,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // =======================================================
   // VERIFY AUTHENTICATION ON APP LOAD / REFRESH
+  // localStorage aur sessionStorage dono check karta hai
+  // (Remember Me checked ho ya na ho, dono case handle hota
+  // hai).
   // =======================================================
 
   useEffect(() => {
     const verifyAuthentication = async () => {
-      const token = localStorage.getItem("access_token");
+      const token = getAuthToken();
 
       if (!token) {
-        localStorage.removeItem("user");
+        clearAuthSession();
         setCurrentUser(null);
         setAuthLoading(false);
         return;
@@ -68,8 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (!response.ok) {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("user");
+          clearAuthSession();
           setCurrentUser(null);
           setAuthLoading(false);
           return;
@@ -78,23 +89,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
 
         if (!data || !data.user || !data.user.email) {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("user");
+          clearAuthSession();
           setCurrentUser(null);
           setAuthLoading(false);
           return;
         }
 
         setCurrentUser(data.user);
-        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // Jis storage mein session hai wahi update kar dein
+        // (rememberMe preserve karne ke liye).
+        const remembered = !!localStorage.getItem("access_token");
+
+        setAuthSession(token, data.user, remembered);
       } catch (error) {
         console.error(
           "Authentication verification failed:",
           error
         );
 
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("user");
+        clearAuthSession();
         setCurrentUser(null);
       } finally {
         setAuthLoading(false);
@@ -106,12 +120,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // =======================================================
   // LOGIN - updates state IMMEDIATELY (no refresh needed)
+  // rememberMe: true  -> localStorage (persists)
+  // rememberMe: false -> sessionStorage (browser band hote
+  // hi session khatam)
   // =======================================================
 
-  const login = (user: User, accessToken: string) => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.setItem("access_token", accessToken);
-    localStorage.setItem("user", JSON.stringify(user));
+  const login = (
+    user: User,
+    accessToken: string,
+    rememberMe: boolean = true
+  ) => {
+    setAuthSession(accessToken, user, rememberMe);
     setCurrentUser(user);
   };
 
@@ -120,8 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // =======================================================
 
   const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
+    clearAuthSession();
     setCurrentUser(null);
   };
 
