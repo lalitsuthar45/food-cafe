@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
 
@@ -12,7 +13,7 @@ export type CartItem = {
 
 type CartPageProps = {
   cartItems: CartItem[];
-  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  setCartItems: Dispatch<SetStateAction<CartItem[]>>;
 };
 
 type PaymentMethod = "COD" | "UPI" | "CARD";
@@ -23,6 +24,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
   const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
   const [mobile, setMobile] = useState("");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [generatedOtp, setGeneratedOtp] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
@@ -168,41 +170,69 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
   };
 
   // =========================
-  // SEND OTP
+  // SEND OTP TO EMAIL
   // =========================
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
     if (!mobile || mobile.length < 10) {
       alert("Please enter valid mobile number");
       return;
     }
 
-    const randomOtp = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
-
-    setGeneratedOtp(randomOtp);
-    setOtpVerified(false);
-
-    alert("Demo OTP: " + randomOtp);
+    try {
+      const response = await fetch(`${getApiUrl()}/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.detail || "Failed to send OTP");
+        return;
+      }
+      setGeneratedOtp("sent");
+      setOtpVerified(false);
+      if (data.demo_otp) alert(`Demo OTP sent to ${email}: ${data.demo_otp}`);
+      else alert(`OTP sent to ${email}`);
+    } catch {
+      alert("Unable to send OTP. Please check the backend server.");
+    }
   };
 
   // =========================
   // VERIFY OTP
   // =========================
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     if (!generatedOtp) {
       alert("Please send OTP first");
       return;
     }
-
-    if (otp === generatedOtp) {
+    if (!otp) {
+      alert("Please enter OTP");
+      return;
+    }
+    try {
+      const response = await fetch(`${getApiUrl()}/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setOtpVerified(false);
+        alert(data.detail || "Invalid OTP");
+        return;
+      }
       setOtpVerified(true);
       alert("OTP verified successfully");
-    } else {
-      setOtpVerified(false);
-      alert("Invalid OTP");
+    } catch {
+      alert("Unable to verify OTP. Please check the backend server.");
     }
   };
 
@@ -275,7 +305,8 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       !address ||
       !city ||
       !pincode ||
-      !mobile
+      !mobile ||
+      !email
     ) {
       alert("Please fill all delivery details");
       return;
@@ -363,6 +394,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       setCity("");
       setPincode("");
       setMobile("");
+      setEmail("");
       setOtp("");
       setGeneratedOtp("");
       setOtpVerified(false);
@@ -601,6 +633,21 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                   }
                 />
 
+                {/* EMAIL */}
+
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  className="border p-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setOtpVerified(false);
+                    setGeneratedOtp("");
+                    setOtp("");
+                  }}
+                />
+
                 {/* CITY */}
 
                 <input
@@ -636,7 +683,9 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                   }
                 />
 
-                {/* OTP */}
+                {/* EMAIL OTP */}
+
+                <p className="md:col-span-2 text-sm text-gray-500 -mb-2">OTP will be sent to your entered email address.</p>
 
                 <div className="md:col-span-2 flex flex-col md:flex-row gap-3">
 
