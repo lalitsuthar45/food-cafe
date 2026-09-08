@@ -183,7 +183,24 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   const { authLoading } = useAuth();
 
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  // =======================================================
+  // CART — localStorage se restore hota hai, taaki refresh
+  // ya page reload ke baad bhi items bane rahein.
+  // =======================================================
+
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("cartItems");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
+  }, [cartItems]);
+
   const [isMenuOpen] = useState(false);
 
   if (authLoading) {
