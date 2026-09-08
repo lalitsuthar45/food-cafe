@@ -36,7 +36,7 @@ const TAGLINES = [
 // disables with a countdown until the oldest attempt expires.
 // =========================================================
 
-const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_MAX = 2;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const ATTEMPTS_KEY = "login_attempts";
 
