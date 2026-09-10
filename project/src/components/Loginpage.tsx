@@ -450,12 +450,25 @@ function Loginpage() {
 
             {/* GOOGLE */}
 
-            <div className="flex justify-center">
+            <div
+              className={`flex justify-center transition-all ${
+                isRateLimited
+                  ? "opacity-40 blur-[1.5px] grayscale pointer-events-none select-none"
+                  : ""
+              }`}
+              aria-disabled={isRateLimited}
+            >
               <GoogleLogin
                 onSuccess={handleGoogleLogin}
                 onError={() => alert("Google login failed")}
               />
             </div>
+
+            {isRateLimited && (
+              <p className="text-center text-xs text-[#8B7355] mt-2">
+                Google login is also paused during the cooldown.
+              </p>
+            )}
 
             {/* REGISTER */}
 
