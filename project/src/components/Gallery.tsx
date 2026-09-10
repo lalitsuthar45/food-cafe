@@ -5,6 +5,7 @@ import { Facebook, Instagram, X } from "lucide-react";
 type GalleryImage = {
   url: string;
   alt: string;
+  description: string;
 };
 
 export default function Gallery() {
@@ -14,34 +15,50 @@ export default function Gallery() {
     {
       url: "https://i.pinimg.com/1200x/48/98/3e/48983e3d343694dd9b780b9651e8793d.jpg",
       alt: "Restaurant",
+      description:
+        "Our dining space is designed to feel like a warm getaway — soft lighting, comfortable seating, and a layout that brings people together over good food. Whether it's a quiet dinner or a lively weekend gathering, this is where the magic happens.",
     },
     {
       url: "https://i.pinimg.com/736x/56/43/33/5643333d786a162edbe13d069f24e78d.jpg",
       alt: "Menu",
+      description:
+        "Every dish on our menu tells a story — from comforting classics to bold new flavors. We update it seasonally to make sure you always have something fresh and exciting to try, alongside the favorites you keep coming back for.",
     },
     {
       url: "https://i.pinimg.com/1200x/c7/7a/45/c77a45e2c2a22dff89c28ab800dcee6c.jpg",
       alt: "Table",
+      description:
+        "A perfectly set table is where every great meal begins. We take care of the little details — clean linens, thoughtful spacing, and a cozy setup — so you can focus on the conversation and the food in front of you.",
     },
     {
       url: "https://i.pinimg.com/1200x/c6/c0/6c/c6c06cefc361e1cabf992516ff2840c2.jpg",
       alt: "Kitchen",
+      description:
+        "This is where the real work happens. Our kitchen team preps and cooks every order with care, using fresh ingredients and time-tested techniques to bring you food that tastes like it was made just for you — because it was.",
     },
     {
       url: "https://i.pinimg.com/736x/90/b8/e2/90b8e2092a439e79a8644dfcf56089ca.jpg",
       alt: "Service Review",
+      description:
+        "Nothing means more to us than hearing from our guests. This moment captures what we strive for every single day — genuine smiles, honest feedback, and the satisfaction of knowing we made someone's meal a little more special.",
     },
     {
       url: "https://i.pinimg.com/736x/88/26/28/8826280cf0007953ea7c98ed0ccf9718.jpg",
       alt: "Counter",
+      description:
+        "Our counter is the first place you'll interact with our team — quick, friendly, and always ready to help you place your order or answer a question. It's a small space that sets the tone for your entire visit.",
     },
     {
       url: "https://i.pinimg.com/736x/dd/e9/74/dde974f310de20710e8c4d58d677f267.jpg",
       alt: "Lights",
+      description:
+        "As the evening sets in, our lighting transforms the whole space into something a little more intimate and magical. It's the small touches like this that turn a regular dinner into a memorable one.",
     },
     {
       url: "https://i.pinimg.com/736x/67/47/22/67472213c9148b004c162a22629c5805.jpg",
       alt: "Staff",
+      description:
+        "Behind every great meal is a team that genuinely cares. Our staff works together with passion and hospitality at heart, making sure every guest feels welcomed the moment they walk through the door.",
     },
   ];
 
@@ -148,9 +165,7 @@ export default function Gallery() {
                   </h3>
 
                   <p className="text-gray-600 leading-relaxed mb-6">
-                    Experience the charm and elegance of our restaurant ambiance.
-                    Every corner is thoughtfully designed to create a warm,
-                    welcoming, and unforgettable dining atmosphere.
+                    {selectedImage.description}
                   </p>
 
                   <div className="flex gap-6 items-center">
