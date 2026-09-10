@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Facebook, Instagram } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Facebook, Instagram, X } from "lucide-react";
 
 type GalleryImage = {
   url: string;
@@ -105,66 +106,78 @@ export default function Gallery() {
         </div>
       </div>
 
-      {selectedImage && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedImage(null)}
-        >
+      {/* =========================================================
+          IMAGE POPUP
+          Portal se seedha document.body mein render kiya, taaki
+          Home page ke <main> wale transform (translate-x-0 /
+          translate-x-64) se ye "position: fixed" popup clip/shift
+          na ho — hamesha screen ke exact center mein stable rahe,
+          chahe kisi bhi photo pe (kahin bhi scroll position pe)
+          click kiya ho.
+      ========================================================= */}
+      {selectedImage &&
+        createPortal(
           <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+            onClick={() => setSelectedImage(null)}
           >
-            <button
-              onClick={() => setSelectedImage(null)}
-              className="absolute top-4 right-6 text-gray-700 text-3xl font-bold z-20"
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden"
             >
-              ✕
-            </button>
+              <button
+                onClick={() => setSelectedImage(null)}
+                aria-label="Close"
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-gray-700 flex items-center justify-center shadow-lg z-20 transition"
+              >
+                <X size={22} />
+              </button>
 
-            <div className="flex flex-col lg:flex-row">
-              <div className="lg:w-1/2 bg-black flex items-center justify-center p-6">
-                <img
-                  src={selectedImage.url}
-                  alt={selectedImage.alt}
-                  className="max-h-[70vh] w-full object-contain rounded-xl"
-                />
-              </div>
+              <div className="flex flex-col lg:flex-row">
+                <div className="lg:w-1/2 bg-black flex items-center justify-center p-6">
+                  <img
+                    src={selectedImage.url}
+                    alt={selectedImage.alt}
+                    className="max-h-[70vh] w-full object-contain rounded-xl"
+                  />
+                </div>
 
-              <div className="lg:w-1/2 p-8 flex flex-col justify-center">
-                <h3 className="text-3xl font-bold mb-4 text-gray-900">
-                  {selectedImage.alt}
-                </h3>
+                <div className="lg:w-1/2 p-8 flex flex-col justify-center">
+                  <h3 className="text-3xl font-bold mb-4 text-gray-900">
+                    {selectedImage.alt}
+                  </h3>
 
-                <p className="text-gray-600 leading-relaxed mb-6">
-                  Experience the charm and elegance of our restaurant ambiance.
-                  Every corner is thoughtfully designed to create a warm,
-                  welcoming, and unforgettable dining atmosphere.
-                </p>
+                  <p className="text-gray-600 leading-relaxed mb-6">
+                    Experience the charm and elegance of our restaurant ambiance.
+                    Every corner is thoughtfully designed to create a warm,
+                    welcoming, and unforgettable dining atmosphere.
+                  </p>
 
-                <div className="flex gap-6 items-center">
-                  <a
-                    href="https://facebook.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-blue-600 hover:bg-blue-700 p-3 rounded-full text-white transition"
-                  >
-                    <Facebook size={20} />
-                  </a>
+                  <div className="flex gap-6 items-center">
+                    <a
+                      href="https://facebook.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-blue-600 hover:bg-blue-700 p-3 rounded-full text-white transition"
+                    >
+                      <Facebook size={20} />
+                    </a>
 
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 p-3 rounded-full text-white transition"
-                  >
-                    <Instagram size={20} />
-                  </a>
+                    <a
+                      href="https://instagram.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 p-3 rounded-full text-white transition"
+                    >
+                      <Instagram size={20} />
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </section>
   );
 }
