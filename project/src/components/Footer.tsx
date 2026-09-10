@@ -46,7 +46,7 @@ export default function Footer() {
             <div className="flex items-center gap-3 mt-5">
               {/* NOTE: "#" placeholders — replace with your real profile links */}
               <a
-                href="#"
+                href="https://www.instagram.com/savoryhaven"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Instagram"
@@ -56,7 +56,7 @@ export default function Footer() {
               </a>
 
               <a
-                href="#"
+                href="https://www.facebook.com/savoryhaven"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Facebook"
