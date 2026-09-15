@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingBag,
+  UtensilsCrossed,
+} from "lucide-react";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
 
 export type CartItem = {
@@ -18,6 +25,7 @@ type CartPageProps = {
 type PaymentMethod = "COD" | "UPI" | "CARD";
 
 function CartPage({ cartItems, setCartItems }: CartPageProps) {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -396,14 +404,30 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
         ========================= */}
 
         {cartItems.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-10 text-center">
+          <div className="bg-white rounded-2xl shadow-lg p-10 sm:p-14 text-center">
+
+            <div className="w-20 h-20 mx-auto rounded-full bg-orange-100 flex items-center justify-center text-orange-600 mb-6">
+              <ShoppingBag size={38} />
+            </div>
+
             <h2 className="text-2xl font-bold text-gray-800">
               Your cart is empty
             </h2>
 
-            <p className="text-gray-500 mt-2">
-              Add delicious food items to continue.
+            <p className="text-gray-500 mt-2 max-w-sm mx-auto">
+              Looks like you haven't added anything yet. Browse our full
+              menu and find something delicious.
             </p>
+
+            <button
+              type="button"
+              onClick={() => navigate("/fullmenu")}
+              className="mt-7 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white px-7 py-3.5 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-0.5 transition-all"
+            >
+              <UtensilsCrossed size={19} />
+              Browse Full Menu
+            </button>
+
           </div>
         ) : (
           <>
