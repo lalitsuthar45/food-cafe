@@ -9,10 +9,12 @@ import {
 
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
+import WhyChooseUs from "./components/WhyChooseUs";
 import MenuSection from "./components/MenuSection";
 import About from "./components/About";
 import Gallery from "./components/Gallery";
 import Contact from "./components/Contact";
+import ReserveBanner from "./components/ReserveBanner";
 import Footer from "./components/Footer";
 import Loginpage from "./components/Loginpage";
 import Registerpage from "./components/Registerpage";
@@ -118,10 +120,12 @@ function HomePage({
       }`}
     >
       <Hero />
+      <WhyChooseUs />
       <MenuSection cartItems={cartItems} setCartItems={setCartItems} />
       <About />
       <Gallery />
       <Contact />
+      <ReserveBanner />
       <Footer />
     </main>
   );
