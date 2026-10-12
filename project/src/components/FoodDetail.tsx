@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -8,8 +7,7 @@ import {
   ShoppingCart,
   Flame,
 } from "lucide-react";
-import type { CartItem, FoodItem } from "./FullMenu";
-import { fullMenuItems } from "./FullMenu";
+import type { CartItem } from "./FullMenu";
 
 type FoodDetailItem = {
   id: number;
@@ -38,14 +36,6 @@ function FoodDetail({ cartItems, setCartItems }: FoodDetailProps) {
   const item = (location.state as { item?: FoodDetailItem } | null)
     ?.item;
 
-  // Related item pe click karke naye food pe navigate karte
-  // waqt page top pe scroll karo, taaki naya detail page
-  // hamesha hero image se shuru ho (purani scroll position pe
-  // na ho).
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-  }, [foodKey]);
-
   // =========================================================
   // ITEM NAHI MILA (direct URL access / refresh)
   // =========================================================
@@ -73,49 +63,6 @@ function FoodDetail({ cartItems, setCartItems }: FoodDetailProps) {
 
   const cartItem = cartItems.find((ci) => ci.id === item.id);
   const quantityInCart = cartItem ? cartItem.quantity : 0;
-
-  // =========================================================
-  // RELATED ITEMS ("You Might Also Like")
-  // Same category pehle (jaisa Zomato/Domino's karte hain),
-  // category match na mile to poore catalog se kuch popular
-  // dishes dikha dete hain, taaki section kabhi khaali na ho.
-  // =========================================================
-  const sameCategory = item.category
-    ? fullMenuItems.filter(
-        (fi) =>
-          fi.category.toLowerCase() === item.category!.toLowerCase() &&
-          fi.name !== item.name
-      )
-    : [];
-
-  const relatedItems: FoodItem[] =
-    sameCategory.length >= 4
-      ? sameCategory.slice(0, 8)
-      : [
-          ...sameCategory,
-          ...fullMenuItems
-            .filter(
-              (fi) =>
-                fi.name !== item.name &&
-                !sameCategory.some((s) => s.id === fi.id)
-            )
-            .slice(0, 8 - sameCategory.length),
-        ];
-
-  const openRelatedDetail = (related: FoodItem) => {
-    navigate(`/food/fullmenu-${related.id}`, {
-      state: {
-        item: {
-          id: related.id,
-          name: related.name,
-          description: related.description,
-          price: related.price,
-          image: related.image,
-          category: related.category,
-        },
-      },
-    });
-  };
 
   // =========================================================
   // CART ACTIONS
@@ -234,50 +181,6 @@ function FoodDetail({ cartItems, setCartItems }: FoodDetailProps) {
         </div>
 
       </div>
-
-      {/* =========================================================
-          YOU MIGHT ALSO LIKE
-          Neeche scroll karne par related dishes — Zomato/Domino's
-          jaisa. Inpe click karne se bhi apna khud ka detail page
-          khulta hai (same navigation pattern, naya item state ke
-          saath push hota hai).
-      ========================================================= */}
-      {relatedItems.length > 0 && (
-        <div className="mt-10 px-5 max-w-2xl mx-auto">
-          <h2 className="text-xl font-extrabold text-gray-900 dark:text-white mb-4">
-            You Might Also Like
-          </h2>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {relatedItems.map((related) => (
-              <button
-                key={related.id}
-                type="button"
-                onClick={() => openRelatedDetail(related)}
-                className="group text-left bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
-              >
-                <div className="h-24 sm:h-28 overflow-hidden">
-                  <img
-                    src={related.image}
-                    alt={related.name}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-
-                <div className="p-2.5">
-                  <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white truncate">
-                    {related.name}
-                  </h3>
-                  <p className="text-xs font-extrabold text-orange-600 mt-0.5">
-                    ₹{related.price}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* STICKY BOTTOM ACTION BAR */}
       <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 p-4 shadow-2xl z-40">
