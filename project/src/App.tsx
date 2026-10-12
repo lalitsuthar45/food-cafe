@@ -10,6 +10,7 @@ import {
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import WhyChooseUs from "./components/WhyChooseUs";
+import ChefsSpecial from "./components/ChefsSpecial";
 import MenuSection from "./components/MenuSection";
 import About from "./components/About";
 import Gallery from "./components/Gallery";
@@ -121,6 +122,7 @@ function HomePage({
     >
       <Hero />
       <WhyChooseUs />
+      <ChefsSpecial cartItems={cartItems} setCartItems={setCartItems} />
       <MenuSection cartItems={cartItems} setCartItems={setCartItems} />
       <About />
       <Gallery />
