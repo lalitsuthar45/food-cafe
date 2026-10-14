@@ -8,6 +8,8 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
+import { useToast } from "./Toast";
+import OrderSuccessModal from "./OrderSuccessModal";
 
 export type CartItem = {
   id: number;
@@ -26,6 +28,7 @@ type PaymentMethod = "COD" | "UPI" | "CARD";
 
 function CartPage({ cartItems, setCartItems }: CartPageProps) {
   const navigate = useNavigate();
+  const toast = useToast();
   const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -46,6 +49,14 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
   const [cvv, setCvv] = useState("");
 
   const [loading, setLoading] = useState(false);
+
+  // Order success modal state
+  const [successModal, setSuccessModal] = useState<{
+    show: boolean;
+    orderId: number | string;
+    grandTotal: number;
+    paymentMethod: string;
+  }>({ show: false, orderId: "", grandTotal: 0, paymentMethod: "" });
 
   // =========================
   // CART TOTAL
@@ -181,7 +192,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
 
   const handleSendOtp = () => {
     if (!mobile || mobile.length < 10) {
-      alert("Please enter valid mobile number");
+      toast.warning("Please enter valid mobile number");
       return;
     }
 
@@ -192,7 +203,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
     setGeneratedOtp(randomOtp);
     setOtpVerified(false);
 
-    alert("Demo OTP: " + randomOtp);
+    toast.info("Demo OTP: " + randomOtp, "OTP Sent");
   };
 
   // =========================
@@ -201,16 +212,16 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
 
   const handleVerifyOtp = () => {
     if (!generatedOtp) {
-      alert("Please send OTP first");
+      toast.warning("Please send OTP first");
       return;
     }
 
     if (otp === generatedOtp) {
       setOtpVerified(true);
-      alert("OTP verified successfully");
+      toast.success("OTP verified successfully ✅");
     } else {
       setOtpVerified(false);
-      alert("Invalid OTP");
+      toast.error("Invalid OTP. Please try again.");
     }
   };
 
@@ -225,12 +236,12 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
 
     if (paymentMethod === "UPI") {
       if (!upiId) {
-        alert("Please enter UPI ID");
+        toast.warning("Please enter UPI ID");
         return false;
       }
 
       if (!isValidUpi(upiId)) {
-        alert(
+        toast.warning(
           "Please enter valid UPI ID. Example: lalit@okaxis"
         );
         return false;
@@ -243,22 +254,22 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       const cleanCard = cardNumber.replace(/\s/g, "");
 
       if (!cleanCard || cleanCard.length !== 16) {
-        alert("Please enter valid 16 digit card number");
+        toast.warning("Please enter valid 16 digit card number");
         return false;
       }
 
       if (!cardHolder) {
-        alert("Please enter card holder name");
+        toast.warning("Please enter card holder name");
         return false;
       }
 
       if (!expiry || expiry.length !== 5) {
-        alert("Please enter valid expiry date MM/YY");
+        toast.warning("Please enter valid expiry date MM/YY");
         return false;
       }
 
       if (!cvv || cvv.length < 3) {
-        alert("Please enter valid CVV");
+        toast.warning("Please enter valid CVV");
         return false;
       }
 
@@ -274,7 +285,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
 
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
-      alert("Cart is empty");
+      toast.warning("Cart is empty");
       return;
     }
 
@@ -285,12 +296,12 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       !pincode ||
       !mobile
     ) {
-      alert("Please fill all delivery details");
+      toast.warning("Please fill all delivery details");
       return;
     }
 
     if (!otpVerified) {
-      alert("Please verify OTP first");
+      toast.warning("Please verify OTP first");
       return;
     }
 
@@ -301,7 +312,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
     const user = getAuthUser();
 
     if (!user.email) {
-      alert("User not found. Please login again.");
+      toast.error("User not found. Please login again.");
       return;
     }
 
@@ -354,13 +365,17 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Order failed");
+        toast.error(data.detail || "Order failed");
         return;
       }
 
-      alert(
-        `Order placed successfully!\nOrder ID: ${data.order_id}\nAmount: ₹${data.grand_total}`
-      );
+      // Show beautiful success modal
+      setSuccessModal({
+        show: true,
+        orderId: data.order_id,
+        grandTotal: data.grand_total,
+        paymentMethod: orderData.payment_method,
+      });
 
       // Clear cart after successful order
       setCartItems([]);
@@ -381,7 +396,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       setCvv("");
       setPaymentMethod("COD");
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -389,6 +404,17 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
 
   return (
     <div className="min-h-screen bg-orange-50 pt-24 px-4 pb-12">
+
+      {/* Order Success Modal */}
+      {successModal.show && (
+        <OrderSuccessModal
+          orderId={successModal.orderId}
+          grandTotal={successModal.grandTotal}
+          paymentMethod={successModal.paymentMethod}
+          onClose={() => setSuccessModal((s) => ({ ...s, show: false }))}
+        />
+      )}
+
       <div className="max-w-6xl mx-auto">
 
         {/* =========================
