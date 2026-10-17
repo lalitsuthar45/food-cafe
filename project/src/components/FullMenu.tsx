@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
+import { useToast } from "./Toast";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -1100,6 +1101,7 @@ export default function FullMenu({
   cartItems,
   setCartItems,
 }: FullMenuProps) {
+  const appToast = useToast();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState<SortType>("default");
@@ -1255,7 +1257,7 @@ export default function FullMenu({
     const user = getAuthUser();
 
     if (!user.email) {
-      alert("Please login to save favorites");
+      appToast.warning("Please login to save favorites");
       return;
     }
 
@@ -1276,6 +1278,7 @@ export default function FullMenu({
           setFavoriteKeys((prev) =>
             prev.filter((key) => key !== foodKey)
           );
+          appToast.info("Removed from favorites");
         }
       } else {
         const response = await fetch(`${API_URL}/favorites`, {
@@ -1295,10 +1298,11 @@ export default function FullMenu({
 
         if (response.ok) {
           setFavoriteKeys((prev) => [...prev, foodKey]);
+          appToast.success("Added to favorites");
         }
       }
     } catch {
-      alert("Unable to update favorites");
+      appToast.error("Unable to update favorites");
     }
   };
 

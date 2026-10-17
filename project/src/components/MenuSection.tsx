@@ -17,6 +17,7 @@ import {
 import type { CartItem, FoodItem } from "./FullMenu";
 import { fullMenuItems } from "./FullMenu";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
+import { useToast } from "./Toast";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -42,6 +43,7 @@ export default function MenuSection({
   setCartItems,
 }: Props) {
   const navigate = useNavigate();
+  const appToast = useToast();
   const [activeCategory, setActiveCategory] = useState("starters");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
@@ -423,7 +425,7 @@ export default function MenuSection({
     const user = getAuthUser();
 
     if (!user.email) {
-      alert("Please login to save favorites");
+      appToast.warning("Please login to save favorites");
       return;
     }
 
@@ -444,6 +446,7 @@ export default function MenuSection({
           setFavoriteKeys((prev) =>
             prev.filter((key) => key !== foodKey)
           );
+          appToast.info("Removed from favorites");
         }
       } else {
         const response = await fetch(`${API_URL}/favorites`, {
@@ -463,10 +466,11 @@ export default function MenuSection({
 
         if (response.ok) {
           setFavoriteKeys((prev) => [...prev, foodKey]);
+          appToast.success("Added to favorites");
         }
       }
     } catch {
-      alert("Unable to update favorites");
+      appToast.error("Unable to update favorites");
     }
   };
 

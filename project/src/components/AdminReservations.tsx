@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAuthHeaders } from "./authStorage";
+import { useToast } from "./Toast";
 
 type Reservation = {
   id: number;
@@ -18,6 +19,7 @@ type Reservation = {
 const statuses = ["Pending", "Confirmed", "Completed", "Cancelled"];
 
 function AdminReservations() {
+  const toast = useToast();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchEmail, setSearchEmail] = useState("");
@@ -47,7 +49,7 @@ function AdminReservations() {
       const data = await response.json();
       setReservations(Array.isArray(data) ? data : []);
     } catch {
-      alert("Reservations load nahi ho rahe");
+      toast.error("Unable to load reservations");
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ function AdminReservations() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Status update failed");
+        toast.error(data.detail || "Status update failed");
         return;
       }
 
@@ -81,8 +83,9 @@ function AdminReservations() {
           item.id === reservationId ? { ...item, status } : item
         )
       );
+      toast.success(`Reservation #${reservationId} status updated to ${status}`);
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
     }
   };
 

@@ -12,6 +12,7 @@ import {
   Package,
 } from "lucide-react";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
+import { useToast } from "./Toast";
 
 type OrderItem = {
   food_name: string;
@@ -176,9 +177,12 @@ const foodInfo: Record<string, FoodInfo> = {
 };
 
 function MyOrders() {
+  const toast = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelLoadingId, setCancelLoadingId] =
+    useState<number | null>(null);
+  const [confirmCancelId, setConfirmCancelId] =
     useState<number | null>(null);
 
   // Currently opened food items
@@ -221,7 +225,7 @@ function MyOrders() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Orders load nahi ho rahe");
+        toast.error(data.detail || "Unable to load orders");
         setOrders([]);
         return;
       }
@@ -236,7 +240,7 @@ function MyOrders() {
 
       setOrders(onlyMyOrders);
     } catch {
-      alert("Orders load nahi ho rahe");
+      toast.error("Unable to load orders");
       setOrders([]);
     } finally {
       setLoading(false);
@@ -271,13 +275,7 @@ function MyOrders() {
   // CANCEL ORDER
   // =========================
 
-  const cancelOrder = async (orderId: number) => {
-    const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this order?"
-    );
-
-    if (!confirmCancel) return;
-
+  const executeCancelOrder = async (orderId: number) => {
     setCancelLoadingId(orderId);
 
     try {
@@ -292,11 +290,11 @@ function MyOrders() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Order cancel nahi ho paaya");
+        toast.error(data.detail || "Could not cancel order");
         return;
       }
 
-      alert(data.message || "Order cancelled successfully");
+      toast.success(data.message || "Order cancelled successfully");
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
@@ -306,7 +304,7 @@ function MyOrders() {
         )
       );
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
     } finally {
       setCancelLoadingId(null);
     }
@@ -415,6 +413,42 @@ function MyOrders() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-slate-950 dark:via-slate-900 dark:to-orange-950 pt-28 px-4 pb-16">
+
+      {/* Cancel Confirmation Modal */}
+      {confirmCancelId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-orange-100 dark:border-slate-800 text-center animate-slide-in">
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center mx-auto mb-4">
+              <XCircle size={36} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Cancel Order?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Are you sure you want to cancel Order #{confirmCancelId}? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmCancelId(null)}
+                className="flex-1 py-3 px-4 rounded-xl border border-gray-300 dark:border-slate-700 font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+              >
+                No, Keep It
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const id = confirmCancelId;
+                  setConfirmCancelId(null);
+                  executeCancelOrder(id);
+                }}
+                className="flex-1 py-3 px-4 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 shadow-md shadow-red-500/30 transition"
+              >
+                Yes, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-5xl mx-auto">
 
         {/* HEADER */}
@@ -501,7 +535,7 @@ function MyOrders() {
 
                       {canCancelOrder(order.status) && (
                         <button
-                          onClick={() => cancelOrder(order.id)}
+                          onClick={() => setConfirmCancelId(order.id)}
                           disabled={cancelLoadingId === order.id}
                           className="flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-xl hover:bg-red-700 transition disabled:opacity-60 font-semibold"
                         >

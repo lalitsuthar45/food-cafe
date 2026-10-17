@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { User, Mail, LogOut, Edit, Save, X, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "./Toast";
 
 type StoredUser = {
   id?: number;
@@ -10,6 +11,7 @@ type StoredUser = {
 
 function Profile() {
   const navigate = useNavigate();
+  const toast = useToast();
 
   const savedUser: StoredUser = JSON.parse(
     localStorage.getItem("user") || "{}"
@@ -38,7 +40,7 @@ function Profile() {
 
   const handleUpdateProfile = async () => {
     if (!name || !email) {
-      alert("Please fill all fields");
+      toast.warning("Please fill all fields");
       return;
     }
 
@@ -60,17 +62,19 @@ function Profile() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Profile update failed");
+        toast.error(data.detail || "Profile update failed");
         return;
       }
 
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      alert(data.message || "Profile updated successfully");
+      toast.success(data.message || "Profile updated successfully");
       setIsEditing(false);
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
     } finally {
       setLoading(false);
     }

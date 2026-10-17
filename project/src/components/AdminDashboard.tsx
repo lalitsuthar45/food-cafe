@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
+import { useToast } from "./Toast";
 
 type DashboardData = {
   total_users: number;
@@ -71,6 +72,7 @@ function CountUp({
 
 function AdminDashboard() {
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -109,14 +111,14 @@ function AdminDashboard() {
       const result = await response.json();
 
       if (!response.ok) {
-        alert(result.detail || "Admin dashboard load nahi ho raha");
+        toast.error(result.detail || "Unable to load dashboard data");
         return;
       }
 
       setData(result);
     } catch (error) {
       console.error("Dashboard error:", error);
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
     } finally {
       setLoading(false);
       setRefreshing(false);

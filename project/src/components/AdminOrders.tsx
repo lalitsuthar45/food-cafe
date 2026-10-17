@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAuthHeaders } from "./authStorage";
+import { useToast } from "./Toast";
 
 type OrderItem = {
   food_name: string;
@@ -32,6 +33,7 @@ const orderStatuses = [
 ];
 
 function AdminOrders() {
+  const toast = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchEmail, setSearchEmail] = useState("");
@@ -62,13 +64,13 @@ function AdminOrders() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Orders load nahi ho rahe");
+        toast.error(data.detail || "Unable to load orders");
         return;
       }
 
       setOrders(Array.isArray(data) ? data : []);
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
     } finally {
       setLoading(false);
     }
@@ -95,7 +97,7 @@ function AdminOrders() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Status update failed");
+        toast.error(data.detail || "Status update failed");
         return;
       }
 
@@ -104,8 +106,9 @@ function AdminOrders() {
           order.id === orderId ? { ...order, status } : order
         )
       );
+      toast.success(`Order #${orderId} status updated to ${status}`);
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
     } finally {
       setUpdatingId(null);
     }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import type { CartItem } from "./FullMenu";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
+import { useToast } from "./Toast";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -21,6 +22,7 @@ type FavouritesProps = {
 };
 
 function Favourites({ cartItems, setCartItems }: FavouritesProps) {
+  const toast = useToast();
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingKey, setRemovingKey] = useState<string | null>(null);
@@ -42,14 +44,14 @@ function Favourites({ cartItems, setCartItems }: FavouritesProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Favorites load nahi ho rahe");
+        toast.error(data.detail || "Unable to load favorites");
         setFavorites([]);
         return;
       }
 
       setFavorites(Array.isArray(data) ? data : []);
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
       setFavorites([]);
     } finally {
       setLoading(false);
@@ -77,15 +79,16 @@ function Favourites({ cartItems, setCartItems }: FavouritesProps) {
       );
 
       if (!response.ok) {
-        alert("Favorite remove nahi ho paya");
+        toast.error("Could not remove favorite");
         return;
       }
 
       setFavorites((prev) =>
         prev.filter((item) => item.food_key !== foodKey)
       );
+      toast.info("Removed from favorites");
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
     } finally {
       setRemovingKey(null);
     }

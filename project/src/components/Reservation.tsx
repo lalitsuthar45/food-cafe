@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { XCircle, CalendarCheck } from "lucide-react";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
+import { useToast } from "./Toast";
 
 type ReservationItem = {
   id: number;
@@ -17,6 +19,7 @@ type ReservationItem = {
 
 function Reservation() {
   const user = getAuthUser();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     name: user.name || "",
@@ -33,6 +36,7 @@ function Reservation() {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [cancelLoadingId, setCancelLoadingId] = useState<number | null>(null);
+  const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);
 
   const getApiUrl = () => {
     if (
@@ -77,14 +81,14 @@ function Reservation() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Reservations load nahi ho rahe");
+        toast.error(data.detail || "Unable to load reservations");
         setReservations([]);
         return;
       }
 
       setReservations(Array.isArray(data) ? data : []);
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
       setReservations([]);
     } finally {
       setPageLoading(false);
@@ -99,7 +103,7 @@ function Reservation() {
     e.preventDefault();
 
     if (!user.email) {
-      alert("Please login again");
+      toast.warning("Please login again");
       return;
     }
 
@@ -110,12 +114,12 @@ function Reservation() {
       !formData.date ||
       !formData.time
     ) {
-      alert("Please fill all required fields");
+      toast.warning("Please fill all required fields");
       return;
     }
 
     if (formData.phone.length < 10) {
-      alert("Please enter valid phone number");
+      toast.warning("Please enter valid phone number");
       return;
     }
 
@@ -146,12 +150,13 @@ function Reservation() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Reservation failed");
+        toast.error(data.detail || "Reservation failed");
         return;
       }
 
-      alert(
-        `Table reserved successfully!\nReservation ID: ${data.reservation_id}`
+      toast.success(
+        `Table reserved successfully! Reservation ID: #${data.reservation_id}`,
+        "Table Reserved 🎉"
       );
 
       setFormData({
@@ -167,22 +172,17 @@ function Reservation() {
 
       fetchReservations();
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
     } finally {
       setLoading(false);
     }
   };
 
-  const cancelReservation = async (reservationId: number) => {
-    if (!window.confirm("Are you sure you want to cancel this reservation?")) {
-      return;
-    }
-
+  const executeCancelReservation = async (reservationId: number) => {
     setCancelLoadingId(reservationId);
 
     try {
       // Backend route: PUT /reservations/{reservation_id}/cancel
-      // (URL order pehle galat tha: /reservations/cancel/{id})
       const response = await fetch(
         `${getApiUrl()}/reservations/${reservationId}/cancel`,
         {
@@ -194,11 +194,11 @@ function Reservation() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Reservation cancel nahi ho paaya");
+        toast.error(data.detail || "Could not cancel reservation");
         return;
       }
 
-      alert(data.message || "Reservation cancelled successfully");
+      toast.success(data.message || "Reservation cancelled successfully");
 
       setReservations((prev) =>
         prev.map((item) =>
@@ -208,7 +208,7 @@ function Reservation() {
         )
       );
     } catch {
-      alert("Backend server not running");
+      toast.error("Unable to connect to server");
     } finally {
       setCancelLoadingId(null);
     }
@@ -222,6 +222,42 @@ function Reservation() {
 
   return (
     <div className="min-h-screen bg-orange-50 pt-28 px-4 pb-12">
+
+      {/* Cancel Confirmation Modal */}
+      {confirmCancelId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-orange-100 dark:border-slate-800 text-center animate-slide-in">
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center mx-auto mb-4">
+              <XCircle size={36} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Cancel Reservation?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Are you sure you want to cancel Reservation #{confirmCancelId}?
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmCancelId(null)}
+                className="flex-1 py-3 px-4 rounded-xl border border-gray-300 dark:border-slate-700 font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+              >
+                No, Keep
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const id = confirmCancelId;
+                  setConfirmCancelId(null);
+                  executeCancelReservation(id);
+                }}
+                className="flex-1 py-3 px-4 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 shadow-md shadow-red-500/30 transition"
+              >
+                Yes, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-5xl mx-auto">
         <div className="bg-white rounded-3xl shadow-xl p-8">
           <h1 className="text-4xl font-bold text-orange-600 text-center mb-2">
@@ -391,7 +427,7 @@ function Reservation() {
 
                   {item.status === "Pending" && (
                     <button
-                      onClick={() => cancelReservation(item.id)}
+                      onClick={() => setConfirmCancelId(item.id)}
                       disabled={cancelLoadingId === item.id}
                       className="mt-5 bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 disabled:opacity-60"
                     >

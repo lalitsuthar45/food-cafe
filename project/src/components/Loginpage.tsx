@@ -7,6 +7,7 @@ import {
 import { Mail, Lock, Eye, EyeOff, Flame } from "lucide-react";
 
 import { useAuth } from "./AuthContext";
+import { useToast } from "./Toast";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -64,6 +65,7 @@ function clearAttempts() {
 function Loginpage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const toast = useToast();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -121,11 +123,11 @@ function Loginpage() {
   const saveUser = (
     user: UserData,
     accessToken: string,
-    message: string
+    _message: string
   ) => {
     login(user, accessToken, rememberMe);
     clearAttempts();
-    alert(message);
+    // Direct login into website without blocking alert
     navigate("/home", { replace: true });
   };
 
@@ -137,14 +139,14 @@ function Loginpage() {
     credentialResponse: CredentialResponse
   ) => {
     if (isRateLimited) {
-      alert(
+      toast.warning(
         `Too many login attempts. Please try again in ${cooldownSeconds}s.`
       );
       return;
     }
 
     if (!credentialResponse.credential) {
-      alert("Google login failed");
+      toast.error("Google login failed");
       return;
     }
 
@@ -162,12 +164,12 @@ function Loginpage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Google login failed");
+        toast.error(data.detail || "Google login failed");
         return;
       }
 
       if (!data.access_token) {
-        alert("Authentication token not received");
+        toast.error("Authentication token not received");
         return;
       }
 
@@ -178,7 +180,7 @@ function Loginpage() {
       );
     } catch (error) {
       console.error("Google Login Error:", error);
-      alert("Unable to connect to server");
+      toast.error("Unable to connect to server");
     } finally {
       setLoading(false);
     }
@@ -194,7 +196,7 @@ function Loginpage() {
     e.preventDefault();
 
     if (isRateLimited) {
-      alert(
+      toast.warning(
         `Too many login attempts. Please try again in ${cooldownSeconds}s.`
       );
       return;
@@ -204,7 +206,7 @@ function Loginpage() {
     const cleanPassword = password;
 
     if (!cleanEmail || !cleanPassword) {
-      alert("Please fill all fields");
+      toast.warning("Please fill all fields");
       return;
     }
 
@@ -224,12 +226,12 @@ function Loginpage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Invalid email or password");
+        toast.error(data.detail || "Invalid email or password");
         return;
       }
 
       if (!data.access_token) {
-        alert("Authentication token not received");
+        toast.error("Authentication token not received");
         return;
       }
 
@@ -240,7 +242,7 @@ function Loginpage() {
       );
     } catch (error) {
       console.error("Login Error:", error);
-      alert("Unable to connect to server");
+      toast.error("Unable to connect to server");
     } finally {
       setLoading(false);
     }
@@ -460,7 +462,7 @@ function Loginpage() {
             >
               <GoogleLogin
                 onSuccess={handleGoogleLogin}
-                onError={() => alert("Google login failed")}
+                onError={() => toast.error("Google login failed")}
               />
             </div>
 

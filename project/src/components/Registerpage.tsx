@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "./AuthContext";
+import { useToast } from "./Toast";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -40,6 +41,7 @@ const TAGLINES = [
 function Registerpage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -66,10 +68,10 @@ function Registerpage() {
   const saveUser = (
     user: UserData,
     accessToken: string,
-    message: string
+    _message: string
   ) => {
     login(user, accessToken);
-    alert(message);
+    // Direct login into website without blocking alert
     navigate("/home", { replace: true });
   };
 
@@ -81,7 +83,7 @@ function Registerpage() {
     credentialResponse: CredentialResponse
   ) => {
     if (!credentialResponse.credential) {
-      alert("Google login failed: No token received");
+      toast.error("Google login failed: No token received");
       return;
     }
 
@@ -99,12 +101,12 @@ function Registerpage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Google login failed");
+        toast.error(data.detail || "Google login failed");
         return;
       }
 
       if (!data.access_token) {
-        alert("Authentication token not received");
+        toast.error("Authentication token not received");
         return;
       }
 
@@ -115,7 +117,7 @@ function Registerpage() {
       );
     } catch (error) {
       console.error("Google Login Error:", error);
-      alert("Unable to connect to server");
+      toast.error("Unable to connect to server");
     } finally {
       setLoading(false);
     }
@@ -148,12 +150,12 @@ function Registerpage() {
     const password = formData.password;
 
     if (!name || !email || !password) {
-      alert("Please fill all fields");
+      toast.warning("Please fill all fields");
       return;
     }
 
     if (password.length < 6) {
-      alert("Password must be at least 6 characters");
+      toast.warning("Password must be at least 6 characters");
       return;
     }
 
@@ -169,12 +171,12 @@ function Registerpage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.detail || "Registration failed");
+        toast.error(data.detail || "Registration failed");
         return;
       }
 
       if (!data.access_token) {
-        alert(
+        toast.error(
           "Registration successful, but authentication token was not received."
         );
         return;
@@ -187,7 +189,7 @@ function Registerpage() {
       );
     } catch (error) {
       console.error("Register Error:", error);
-      alert("Unable to connect to server");
+      toast.error("Unable to connect to server");
     } finally {
       setLoading(false);
     }
@@ -412,7 +414,7 @@ function Registerpage() {
             <div className="flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleLogin}
-                onError={() => alert("Google login failed")}
+                onError={() => toast.error("Google login failed")}
               />
             </div>
 
