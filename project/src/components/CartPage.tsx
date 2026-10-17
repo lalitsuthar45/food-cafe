@@ -6,6 +6,11 @@ import {
   Trash2,
   ShoppingBag,
   UtensilsCrossed,
+  Copy,
+  Check,
+  ShieldCheck,
+  KeyRound,
+  X,
 } from "lucide-react";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
 import { useToast } from "./Toast";
@@ -57,6 +62,10 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
     grandTotal: number;
     paymentMethod: string;
   }>({ show: false, orderId: "", grandTotal: 0, paymentMethod: "" });
+
+  // OTP Center Modal state
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [copiedOtp, setCopiedOtp] = useState(false);
 
   // =========================
   // CART TOTAL
@@ -202,8 +211,27 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
 
     setGeneratedOtp(randomOtp);
     setOtpVerified(false);
+    setShowOtpModal(true);
+    setCopiedOtp(false);
+  };
 
-    toast.info("Demo OTP: " + randomOtp, "OTP Sent");
+  const copyOtpToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedOtp);
+      setCopiedOtp(true);
+      toast.success("OTP copied to clipboard!");
+      setTimeout(() => setCopiedOtp(false), 2500);
+    } catch {
+      setCopiedOtp(true);
+      setTimeout(() => setCopiedOtp(false), 2500);
+    }
+  };
+
+  const autoFillOtp = () => {
+    setOtp(generatedOtp);
+    setOtpVerified(true);
+    setShowOtpModal(false);
+    toast.success("OTP auto-filled and verified! ✅");
   };
 
   // =========================
@@ -413,6 +441,88 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
           paymentMethod={successModal.paymentMethod}
           onClose={() => setSuccessModal((s) => ({ ...s, show: false }))}
         />
+      )}
+
+      {/* Demo OTP Center Modal */}
+      {showOtpModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div
+            className="
+              relative w-full max-w-sm sm:max-w-md
+              bg-white dark:bg-slate-900
+              rounded-3xl shadow-2xl
+              p-6 sm:p-8
+              border border-orange-100 dark:border-slate-800
+              text-center
+              animate-slide-in
+            "
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setShowOtpModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition p-1"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Icon */}
+            <div className="w-16 h-16 rounded-2xl bg-orange-100 dark:bg-orange-900/40 text-orange-600 flex items-center justify-center mx-auto mb-4 shadow-inner">
+              <ShieldCheck size={36} />
+            </div>
+
+            <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-1">
+              Verification Code
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Use this demo OTP to verify delivery to <span className="font-semibold text-gray-800 dark:text-gray-200">+91 {mobile}</span>
+            </p>
+
+            {/* Big OTP Display */}
+            <div className="bg-orange-50/80 dark:bg-slate-800/80 border-2 border-dashed border-orange-300 dark:border-orange-500/40 rounded-2xl p-4 mb-6">
+              <div className="text-xs font-semibold text-orange-600 dark:text-orange-400 tracking-wider uppercase mb-1">
+                Your One-Time Password
+              </div>
+              <div className="font-mono text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-[0.35em] pl-[0.35em]">
+                {generatedOtp}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={copyOtpToClipboard}
+                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-orange-500 text-orange-600 dark:text-orange-400 font-bold text-sm hover:bg-orange-50 dark:hover:bg-slate-800 transition active:scale-95"
+              >
+                {copiedOtp ? (
+                  <>
+                    <Check size={18} className="text-green-600" />
+                    <span className="text-green-600">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={18} />
+                    Copy OTP
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={autoFillOtp}
+                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-orange-600 to-red-500 text-white font-bold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-red-600 transition active:scale-95"
+              >
+                <KeyRound size={18} />
+                Auto-Fill & Verify
+              </button>
+            </div>
+
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-4">
+              Demo OTP simulation • No SMS charges applied
+            </p>
+          </div>
+        </div>
       )}
 
       <div className="max-w-6xl mx-auto">
