@@ -46,10 +46,11 @@ type PaymentMethod = "COD" | "UPI" | "CARD";
 function CartPage({ cartItems, setCartItems }: CartPageProps) {
   const navigate = useNavigate();
   const toast = useToast();
-  const authUser = getAuthUser();
 
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState(authUser.email || "");
+  // Email jaan-bujh kar khaali shuru hota hai (auto-fill nahi) —
+  // sirf placeholder se pata chalega ki kya bharna hai.
+  const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
@@ -441,10 +442,10 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       // Clear cart after successful order
       setCartItems([]);
 
-      // Reset delivery/payment fields (email stays tied to the
-      // account so it doesn't need re-typing next time)
+      // Reset delivery/payment fields — email bhi khaali hi
+      // reset hoti hai (auto-fill nahi karte)
       setFullName("");
-      setEmail(authUser.email || "");
+      setEmail("");
       setAddress("");
       setCity("");
       setPincode("");
@@ -857,8 +858,8 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                     />
                     <input
                       type="email"
-                      placeholder="you@example.com"
-                      autoComplete="email"
+                      placeholder="Enter your email address"
+                      autoComplete="off"
                       className="w-full border border-[#E8DDD0] pl-10 pr-3 py-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition text-[#2A1810] placeholder:text-[#B8A896]"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
