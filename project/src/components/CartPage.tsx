@@ -11,6 +11,18 @@ import {
   ShieldCheck,
   KeyRound,
   X,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Building2,
+  Hash,
+  Banknote,
+  Smartphone,
+  CreditCard,
+  Lock,
+  ReceiptText,
+  Truck,
 } from "lucide-react";
 import { getAuthHeaders, getAuthUser } from "./authStorage";
 import { useToast } from "./Toast";
@@ -34,7 +46,10 @@ type PaymentMethod = "COD" | "UPI" | "CARD";
 function CartPage({ cartItems, setCartItems }: CartPageProps) {
   const navigate = useNavigate();
   const toast = useToast();
+  const authUser = getAuthUser();
+
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState(authUser.email || "");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
@@ -196,6 +211,14 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
   };
 
   // =========================
+  // EMAIL VALIDATION
+  // =========================
+
+  const isValidEmail = (value: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  // =========================
   // SEND OTP
   // =========================
 
@@ -319,12 +342,18 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
 
     if (
       !fullName ||
+      !email ||
       !address ||
       !city ||
       !pincode ||
       !mobile
     ) {
       toast.warning("Please fill all delivery details");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      toast.warning("Please enter a valid email address");
       return;
     }
 
@@ -349,6 +378,10 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
     const orderData = {
       user_email: user.email,
       customer_name: fullName,
+      // Order-specific contact email (editable here, prefilled
+      // from the logged-in account). Backends that don't use
+      // this field yet will simply ignore it.
+      contact_email: email,
       phone: mobile,
       address,
       city,
@@ -408,8 +441,10 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       // Clear cart after successful order
       setCartItems([]);
 
-      // Reset delivery/payment fields
+      // Reset delivery/payment fields (email stays tied to the
+      // account so it doesn't need re-typing next time)
       setFullName("");
+      setEmail(authUser.email || "");
       setAddress("");
       setCity("");
       setPincode("");
@@ -430,8 +465,28 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
     }
   };
 
+  const paymentOptions: {
+    id: PaymentMethod;
+    label: string;
+    sub: string;
+    icon: typeof Banknote;
+  }[] = [
+    { id: "COD", label: "Cash on Delivery", sub: "Pay when it arrives", icon: Banknote },
+    { id: "UPI", label: "UPI Payment", sub: "GPay, PhonePe, Paytm", icon: Smartphone },
+    { id: "CARD", label: "Card", sub: "Debit / Credit", icon: CreditCard },
+  ];
+
   return (
-    <div className="min-h-screen bg-orange-50 pt-24 px-4 pb-12">
+    <div className="relative min-h-screen bg-[#FFF8F0] pt-24 px-4 pb-28 lg:pb-16 overflow-hidden">
+      {/* fonts, matching the rest of the site */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
+        .cart-font-display { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+      `}</style>
+
+      {/* decorative blur glows, matching About/Contact/Gallery sections */}
+      <div className="pointer-events-none absolute -top-24 -left-20 w-80 h-80 rounded-full bg-orange-300/20 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -right-24 w-96 h-96 rounded-full bg-red-300/15 blur-3xl" />
 
       {/* Order Success Modal */}
       {successModal.show && (
@@ -525,32 +580,45 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto">
+      <div className="relative max-w-6xl mx-auto">
 
         {/* =========================
             TITLE
         ========================= */}
 
-        <h1 className="text-4xl font-bold text-orange-600 mb-8">
-          Your Cart
-        </h1>
+        <div className="mb-8">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100 text-orange-700 text-xs font-bold tracking-widest uppercase mb-3">
+            <ShoppingBag size={14} />
+            Checkout
+          </span>
+
+          <h1 className="cart-font-display text-3xl sm:text-4xl font-semibold text-[#2A1810]">
+            Your Cart
+          </h1>
+
+          {cartItems.length > 0 && (
+            <p className="text-[#7A6A5E] mt-1.5">
+              {cartItems.length} {cartItems.length === 1 ? "item" : "items"} ready for checkout
+            </p>
+          )}
+        </div>
 
         {/* =========================
             EMPTY CART
         ========================= */}
 
         {cartItems.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-10 sm:p-14 text-center">
+          <div className="bg-white rounded-3xl shadow-lg shadow-orange-100 border border-orange-100 p-10 sm:p-14 text-center">
 
             <div className="w-20 h-20 mx-auto rounded-full bg-orange-100 flex items-center justify-center text-orange-600 mb-6">
               <ShoppingBag size={38} />
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="cart-font-display text-2xl font-semibold text-[#2A1810]">
               Your cart is empty
             </h2>
 
-            <p className="text-gray-500 mt-2 max-w-sm mx-auto">
+            <p className="text-[#7A6A5E] mt-2 max-w-sm mx-auto">
               Looks like you haven't added anything yet. Browse our full
               menu and find something delicious.
             </p>
@@ -571,19 +639,19 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                 CART + BILL
             ========================= */}
 
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 items-start">
 
               {/* CART ITEMS */}
 
-              <div className="lg:col-span-2 space-y-5">
+              <div className="lg:col-span-2 space-y-4">
 
                 {cartItems.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-2xl shadow-md p-5"
+                    className="bg-white rounded-2xl shadow-sm border border-orange-100/80 p-4 sm:p-5 hover:shadow-md transition-shadow"
                   >
 
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-5">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-5">
 
                       {/* FOOD INFO */}
 
@@ -593,21 +661,21 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                           <img
                             src={item.image}
                             alt={item.name}
-                            className="w-24 h-24 object-cover rounded-xl flex-shrink-0"
+                            className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl flex-shrink-0"
                           />
                         )}
 
                         <div className="min-w-0">
 
-                          <h2 className="text-xl font-bold text-gray-800 truncate">
+                          <h2 className="text-base sm:text-xl font-bold text-[#2A1810] truncate">
                             {item.name}
                           </h2>
 
-                          <p className="text-gray-500 mt-1">
+                          <p className="text-[#9A8A7E] text-sm mt-1">
                             ₹{item.price} × {item.quantity}
                           </p>
 
-                          <p className="text-orange-600 font-semibold mt-1">
+                          <p className="text-orange-600 font-semibold mt-1 text-sm sm:text-base">
                             Subtotal: ₹
                             {item.price * item.quantity}
                           </p>
@@ -620,25 +688,26 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
 
                       <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between gap-3">
 
-                        <div className="text-2xl font-bold text-gray-800">
+                        <div className="text-xl sm:text-2xl font-bold text-[#2A1810]">
                           ₹{item.price * item.quantity}
                         </div>
 
                         {/* QUANTITY */}
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center rounded-full bg-orange-50 border border-orange-100 overflow-hidden">
 
                           <button
                             type="button"
                             onClick={() =>
                               decreaseQuantity(item.id)
                             }
-                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 transition"
+                            aria-label={`Decrease quantity of ${item.name}`}
+                            className="w-9 h-9 flex items-center justify-center text-orange-700 hover:bg-orange-100 transition"
                           >
-                            <Minus size={18} />
+                            <Minus size={16} />
                           </button>
 
-                          <span className="min-w-8 text-center font-bold text-gray-800">
+                          <span className="min-w-8 text-center font-bold text-[#2A1810]">
                             {item.quantity}
                           </span>
 
@@ -647,9 +716,10 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                             onClick={() =>
                               increaseQuantity(item.id)
                             }
-                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition"
+                            aria-label={`Increase quantity of ${item.name}`}
+                            className="w-9 h-9 flex items-center justify-center bg-gradient-to-r from-orange-600 to-red-500 text-white hover:brightness-110 transition"
                           >
-                            <Plus size={18} />
+                            <Plus size={16} />
                           </button>
 
                         </div>
@@ -661,10 +731,11 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                           onClick={() =>
                             removeItem(item.id)
                           }
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition font-semibold"
+                          aria-label={`Remove ${item.name} from cart`}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition font-semibold text-sm"
                         >
-                          <Trash2 size={17} />
-                          Remove
+                          <Trash2 size={16} />
+                          <span className="hidden sm:inline">Remove</span>
                         </button>
 
                       </div>
@@ -677,49 +748,66 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
               </div>
 
               {/* =========================
-                  BILL SUMMARY
+                  BILL SUMMARY (sticky on desktop)
               ========================= */}
 
-              <div className="bg-white rounded-2xl shadow-lg p-6 h-fit">
+              <div className="bg-white rounded-2xl shadow-lg shadow-orange-100 border border-orange-100 p-6 lg:sticky lg:top-24">
 
-                <h2 className="text-2xl font-bold text-gray-800 mb-5">
+                <h2 className="cart-font-display text-xl font-semibold text-[#2A1810] mb-5 flex items-center gap-2">
+                  <ReceiptText size={20} className="text-orange-600" />
                   Bill Summary
                 </h2>
 
-                <div className="space-y-3 text-gray-700">
+                <div className="space-y-3 text-[#5C4A3D] text-sm">
 
                   <div className="flex justify-between">
                     <span>Items Total</span>
-                    <span>₹{itemsTotal}</span>
+                    <span className="font-medium text-[#2A1810]">₹{itemsTotal}</span>
                   </div>
 
                   <div className="flex justify-between">
                     <span>GST (5%)</span>
-                    <span>₹{gst}</span>
+                    <span className="font-medium text-[#2A1810]">₹{gst}</span>
                   </div>
 
                   <div className="flex justify-between">
-                    <span>Delivery Charge</span>
-                    <span>
+                    <span className="flex items-center gap-1.5">
+                      <Truck size={14} />
+                      Delivery Charge
+                    </span>
+                    <span className="font-medium text-[#2A1810]">
                       {deliveryCharge === 0
                         ? "Free"
                         : `₹${deliveryCharge}`}
                     </span>
                   </div>
 
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount</span>
-                    <span>-₹{discount}</span>
-                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount</span>
+                      <span className="font-medium">-₹{discount}</span>
+                    </div>
+                  )}
 
-                  <hr />
+                  <hr className="border-orange-100" />
 
-                  <div className="flex justify-between text-xl font-bold text-orange-600">
+                  <div className="flex justify-between text-lg font-bold text-[#2A1810]">
                     <span>Grand Total</span>
-                    <span>₹{grandTotal}</span>
+                    <span className="text-orange-600">₹{grandTotal}</span>
                   </div>
 
                 </div>
+
+                {deliveryCharge === 0 && itemsTotal > 0 && (
+                  <div className="mt-4 text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-xl px-3 py-2 text-center">
+                    🎉 You unlocked free delivery
+                  </div>
+                )}
+
+                {/* Desktop place-order button lives inside the
+                    form below; this card stays focused on the
+                    numbers while the mobile bar (further down)
+                    carries the CTA on small screens. */}
 
               </div>
 
@@ -729,172 +817,239 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                 DELIVERY & PAYMENT
             ========================= */}
 
-            <div className="mt-10 bg-white p-8 rounded-2xl shadow-xl">
+            <div className="mt-8 bg-white rounded-3xl shadow-lg shadow-orange-100 border border-orange-100 p-6 sm:p-8">
 
-              <h2 className="text-2xl font-bold mb-6 text-orange-600">
-                Delivery & Payment Details
+              <h2 className="cart-font-display text-2xl font-semibold text-[#2A1810] mb-1">
+                Delivery &amp; Payment
               </h2>
+              <p className="text-[#9A8A7E] text-sm mb-6">
+                We'll use these details to get your order to you.
+              </p>
 
-              <div className="grid md:grid-cols-2 gap-5">
+              {/* ---------- CONTACT DETAILS ---------- */}
 
-                {/* NAME */}
+              <div className="mb-7">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-[#8B6F52] uppercase tracking-wide mb-3">
+                  <User size={15} />
+                  Contact Details
+                </h3>
 
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  className="border p-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
-                  value={fullName}
-                  onChange={(e) =>
-                    setFullName(e.target.value)
-                  }
-                />
+                <div className="grid md:grid-cols-2 gap-4">
 
-                {/* MOBILE */}
+                  <div className="relative">
+                    <User
+                      size={17}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B8A896]"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Full Name"
+                      className="w-full border border-[#E8DDD0] pl-10 pr-3 py-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition text-[#2A1810] placeholder:text-[#B8A896]"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                    />
+                  </div>
 
-                <input
-                  type="tel"
-                  placeholder="Mobile Number"
-                  className="border p-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
-                  value={mobile}
-                  onChange={(e) =>
-                    setMobile(e.target.value)
-                  }
-                />
+                  <div className="relative">
+                    <Mail
+                      size={17}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B8A896]"
+                    />
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      className="w-full border border-[#E8DDD0] pl-10 pr-3 py-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition text-[#2A1810] placeholder:text-[#B8A896]"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
 
-                {/* CITY */}
+                  <div className="relative md:col-span-2">
+                    <Phone
+                      size={17}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B8A896]"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Mobile Number"
+                      className="w-full border border-[#E8DDD0] pl-10 pr-3 py-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition text-[#2A1810] placeholder:text-[#B8A896]"
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value)}
+                    />
+                  </div>
 
-                <input
-                  type="text"
-                  placeholder="City"
-                  className="border p-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
-                  value={city}
-                  onChange={(e) =>
-                    setCity(e.target.value)
-                  }
-                />
+                </div>
+              </div>
 
-                {/* PINCODE */}
+              {/* ---------- ADDRESS ---------- */}
 
-                <input
-                  type="text"
-                  placeholder="Pincode"
-                  className="border p-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
-                  value={pincode}
-                  onChange={(e) =>
-                    setPincode(e.target.value)
-                  }
-                />
+              <div className="mb-7">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-[#8B6F52] uppercase tracking-wide mb-3">
+                  <MapPin size={15} />
+                  Delivery Address
+                </h3>
 
-                {/* ADDRESS */}
+                <div className="grid md:grid-cols-2 gap-4">
 
-                <textarea
-                  placeholder="Full Address"
-                  className="md:col-span-2 border p-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
-                  value={address}
-                  onChange={(e) =>
-                    setAddress(e.target.value)
-                  }
-                />
+                  <div className="relative">
+                    <Building2
+                      size={17}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B8A896]"
+                    />
+                    <input
+                      type="text"
+                      placeholder="City"
+                      className="w-full border border-[#E8DDD0] pl-10 pr-3 py-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition text-[#2A1810] placeholder:text-[#B8A896]"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                    />
+                  </div>
 
-                {/* OTP */}
+                  <div className="relative">
+                    <Hash
+                      size={17}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B8A896]"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Pincode"
+                      className="w-full border border-[#E8DDD0] pl-10 pr-3 py-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition text-[#2A1810] placeholder:text-[#B8A896]"
+                      value={pincode}
+                      onChange={(e) => setPincode(e.target.value)}
+                    />
+                  </div>
 
-                <div className="md:col-span-2 flex flex-col md:flex-row gap-3">
+                  <div className="relative md:col-span-2">
+                    <MapPin
+                      size={17}
+                      className="absolute left-3.5 top-3.5 text-[#B8A896]"
+                    />
+                    <textarea
+                      placeholder="Full Address — house/flat no., street, landmark"
+                      rows={3}
+                      className="w-full border border-[#E8DDD0] pl-10 pr-3 py-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition text-[#2A1810] placeholder:text-[#B8A896] resize-none"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ---------- VERIFY MOBILE (OTP) ---------- */}
+
+              <div className="mb-7">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-[#8B6F52] uppercase tracking-wide mb-3">
+                  <ShieldCheck size={15} />
+                  Verify Mobile Number
+                </h3>
+
+                <div className="flex flex-col sm:flex-row gap-3">
 
                   <input
                     type="text"
                     placeholder="Enter OTP"
-                    className="flex-1 border p-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
+                    className="flex-1 border border-[#E8DDD0] px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition text-[#2A1810] placeholder:text-[#B8A896]"
                     value={otp}
-                    onChange={(e) =>
-                      setOtp(e.target.value)
-                    }
+                    onChange={(e) => setOtp(e.target.value)}
                   />
 
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    className="bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-700"
-                  >
-                    Send OTP
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      className="flex-1 sm:flex-none bg-[#2A1810] text-white px-5 py-3 rounded-xl font-semibold hover:bg-[#1F1410] transition"
+                    >
+                      Send OTP
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={handleVerifyOtp}
-                    className="bg-green-600 text-white px-5 py-3 rounded-xl hover:bg-green-700"
-                  >
-                    Verify OTP
-                  </button>
+                    <button
+                      type="button"
+                      onClick={handleVerifyOtp}
+                      className="flex-1 sm:flex-none bg-gradient-to-r from-orange-600 to-red-500 text-white px-5 py-3 rounded-xl font-semibold shadow-md shadow-orange-300/40 hover:-translate-y-0.5 transition-all"
+                    >
+                      Verify
+                    </button>
+                  </div>
 
                 </div>
 
                 {otpVerified && (
-                  <p className="md:col-span-2 text-green-600 font-semibold">
-                    OTP verified successfully ✅
+                  <p className="flex items-center gap-1.5 text-green-600 font-semibold text-sm mt-3">
+                    <Check size={16} />
+                    Mobile number verified
                   </p>
                 )}
+              </div>
 
-                {/* PAYMENT METHOD */}
+              {/* ---------- PAYMENT METHOD ---------- */}
 
-                <div className="md:col-span-2">
+              <div className="mb-2">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-[#8B6F52] uppercase tracking-wide mb-3">
+                  <CreditCard size={15} />
+                  Payment Method
+                </h3>
 
-                  <label className="font-semibold text-gray-700 text-lg">
-                    Payment Method
-                  </label>
+                <div className="grid sm:grid-cols-3 gap-3">
 
-                  <div className="grid md:grid-cols-3 gap-4 mt-3">
+                  {paymentOptions.map(({ id, label, sub, icon: Icon }) => {
+                    const active = paymentMethod === id;
 
-                    {["COD", "UPI", "CARD"].map(
-                      (method) => (
-                        <button
-                          key={method}
-                          type="button"
-                          onClick={() =>
-                            setPaymentMethod(
-                              method as PaymentMethod
-                            )
-                          }
-                          className={`p-4 rounded-xl border font-semibold transition-all ${
-                            paymentMethod === method
-                              ? "bg-orange-600 text-white border-orange-600 shadow-lg"
-                              : "bg-white text-gray-700 border-gray-300 hover:border-orange-500"
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setPaymentMethod(id)}
+                        className={`flex items-center gap-3 p-4 rounded-2xl border text-left transition-all ${
+                          active
+                            ? "bg-gradient-to-br from-orange-50 to-red-50 border-orange-400 shadow-md ring-1 ring-orange-300"
+                            : "bg-white border-[#E8DDD0] hover:border-orange-300"
+                        }`}
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            active
+                              ? "bg-gradient-to-br from-orange-600 to-red-500 text-white"
+                              : "bg-orange-50 text-orange-600"
                           }`}
                         >
-                          {method === "COD"
-                            ? "Cash on Delivery"
-                            : method === "UPI"
-                            ? "UPI Payment"
-                            : "Debit / Credit Card"}
-                        </button>
-                      )
-                    )}
+                          <Icon size={19} />
+                        </div>
 
-                  </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-[#2A1810] text-sm truncate">
+                            {label}
+                          </p>
+                          <p className="text-xs text-[#9A8A7E] truncate">
+                            {sub}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
 
                 </div>
 
                 {/* UPI */}
 
                 {paymentMethod === "UPI" && (
-                  <div className="md:col-span-2 bg-green-50 border border-green-300 rounded-xl p-5">
+                  <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl p-5">
 
-                    <h3 className="font-bold text-lg text-green-700 mb-4">
-                      UPI Payment
-                    </h3>
+                    <h4 className="font-bold text-green-700 mb-3">
+                      Enter UPI ID
+                    </h4>
 
                     <input
                       type="text"
-                      placeholder="Enter UPI ID (example@okaxis)"
+                      placeholder="example@okaxis"
                       value={upiId}
-                      onChange={(e) =>
-                        setUpiId(e.target.value)
-                      }
-                      className="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-500"
+                      onChange={(e) => setUpiId(e.target.value)}
+                      className="w-full border border-green-200 bg-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-400 transition"
                     />
 
-                    <p className="text-sm text-gray-500 mt-2">
-                      Example: lalit@okaxis, abc@ybl,
-                      user@ibl
+                    <p className="text-xs text-green-700/70 mt-2">
+                      Example: lalit@okaxis, abc@ybl, user@ibl
                     </p>
 
                   </div>
@@ -903,46 +1058,40 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                 {/* CARD */}
 
                 {paymentMethod === "CARD" && (
-                  <div className="md:col-span-2 bg-blue-50 border border-blue-300 rounded-xl p-5">
+                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-2xl p-5">
 
-                    <h3 className="font-bold text-lg text-blue-700 mb-4">
-                      Debit / Credit Card
-                    </h3>
+                    <h4 className="font-bold text-blue-700 mb-3">
+                      Card Details
+                    </h4>
 
                     <input
                       type="text"
                       placeholder="Card Number"
                       value={cardNumber}
                       onChange={(e) =>
-                        handleCardNumberChange(
-                          e.target.value
-                        )
+                        handleCardNumberChange(e.target.value)
                       }
-                      className="w-full border p-3 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-blue-200 bg-white p-3 rounded-xl mb-3 outline-none focus:ring-2 focus:ring-blue-400 transition"
                     />
 
                     <input
                       type="text"
                       placeholder="Card Holder Name"
                       value={cardHolder}
-                      onChange={(e) =>
-                        setCardHolder(e.target.value)
-                      }
-                      className="w-full border p-3 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => setCardHolder(e.target.value)}
+                      className="w-full border border-blue-200 bg-white p-3 rounded-xl mb-3 outline-none focus:ring-2 focus:ring-blue-400 transition"
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
 
                       <input
                         type="text"
                         placeholder="MM/YY"
                         value={expiry}
                         onChange={(e) =>
-                          handleExpiryChange(
-                            e.target.value
-                          )
+                          handleExpiryChange(e.target.value)
                         }
-                        className="border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-blue-200 bg-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 transition"
                       />
 
                       <input
@@ -951,14 +1100,9 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                         placeholder="CVV"
                         value={cvv}
                         onChange={(e) =>
-                          setCvv(
-                            e.target.value.replace(
-                              /\D/g,
-                              ""
-                            )
-                          )
+                          setCvv(e.target.value.replace(/\D/g, ""))
                         }
-                        className="border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-blue-200 bg-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 transition"
                       />
 
                     </div>
@@ -966,73 +1110,38 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                   </div>
                 )}
 
-                {/* PLACE ORDER */}
+                {paymentMethod === "COD" && (
+                  <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-sm">
+                    <p className="text-yellow-800">
+                      You will pay <b>₹{grandTotal}</b> in cash when your
+                      order is delivered.
+                    </p>
+                  </div>
+                )}
+
+              </div>
+
+              {/* ---------- TRUST STRIP + DESKTOP CTA ---------- */}
+
+              <div className="mt-7 pt-6 border-t border-orange-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+
+                <div className="flex items-center gap-2 text-xs text-[#9A8A7E]">
+                  <Lock size={14} className="text-green-600" />
+                  Your information is encrypted and secure
+                </div>
 
                 <button
                   type="button"
                   onClick={handlePlaceOrder}
                   disabled={loading}
-                  className="md:col-span-2 w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-xl text-lg font-bold transition disabled:opacity-60"
+                  className="hidden lg:inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-orange-300/40 hover:shadow-orange-400/50 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:translate-y-0"
                 >
                   {loading
-                    ? "Processing Payment..."
+                    ? "Processing..."
                     : paymentMethod === "COD"
-                    ? `Place Order ₹${grandTotal}`
+                    ? `Place Order — ₹${grandTotal}`
                     : `Pay ₹${grandTotal}`}
                 </button>
-
-                {/* COD INFO */}
-
-                {paymentMethod === "COD" && (
-                  <div className="md:col-span-2 bg-yellow-50 border border-yellow-300 rounded-xl p-4">
-
-                    <h3 className="font-bold text-yellow-700">
-                      Cash On Delivery
-                    </h3>
-
-                    <p className="text-gray-600 mt-2">
-                      You will pay <b>₹{grandTotal}</b>{" "}
-                      when your order is delivered.
-                    </p>
-
-                  </div>
-                )}
-
-                {/* UPI INFO */}
-
-                {paymentMethod === "UPI" && (
-                  <div className="md:col-span-2 bg-green-50 border border-green-300 rounded-xl p-4">
-
-                    <h3 className="font-bold text-green-700">
-                      UPI Payment
-                    </h3>
-
-                    <p className="text-gray-600 mt-2">
-                      Your payment will be processed
-                      securely through your UPI
-                      application.
-                    </p>
-
-                  </div>
-                )}
-
-                {/* CARD INFO */}
-
-                {paymentMethod === "CARD" && (
-                  <div className="md:col-span-2 bg-blue-50 border border-blue-300 rounded-xl p-4">
-
-                    <h3 className="font-bold text-blue-700">
-                      Secure Card Payment
-                    </h3>
-
-                    <p className="text-gray-600 mt-2">
-                      Your card details are encrypted.
-                      Only the last 4 digits are stored
-                      with the order for reference.
-                    </p>
-
-                  </div>
-                )}
 
               </div>
 
@@ -1041,6 +1150,39 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
         )}
 
       </div>
+
+      {/* =========================================================
+          MOBILE STICKY CHECKOUT BAR
+          Zomato/Swiggy-style persistent bar on small screens so
+          the CTA is always reachable without scrolling back up.
+      ========================================================= */}
+
+      {cartItems.length > 0 && (
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-orange-100 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs text-[#9A8A7E]">Grand Total</p>
+              <p className="text-lg font-extrabold text-[#2A1810]">
+                ₹{grandTotal}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handlePlaceOrder}
+              disabled={loading}
+              className="flex-1 max-w-[220px] flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-orange-300/40 active:scale-[0.98] transition-all disabled:opacity-60"
+            >
+              {loading
+                ? "Processing..."
+                : paymentMethod === "COD"
+                ? "Place Order"
+                : "Pay Now"}
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
