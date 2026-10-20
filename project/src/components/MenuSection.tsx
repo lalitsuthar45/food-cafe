@@ -13,6 +13,7 @@ import {
   Minus,
   Plus,
   Search,
+  ArrowRight,
 } from "lucide-react";
 import type { CartItem, FoodItem } from "./FullMenu";
 import { fullMenuItems } from "./FullMenu";
@@ -532,8 +533,13 @@ export default function MenuSection({
   return (
     <section
       id="menu"
-      className="relative py-24 bg-gradient-to-br from-white via-orange-50 to-amber-50 dark:from-slate-950 dark:via-slate-900 dark:to-orange-950 overflow-hidden"
+      className="relative py-16 sm:py-24 bg-[#FFF8F0] overflow-hidden"
     >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
+        .menu-font-display { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+      `}</style>
+
       {/* =========================================================
           SUCCESS TOAST
           Portal se seedha document.body mein render kiya, taaki
@@ -548,35 +554,34 @@ export default function MenuSection({
           document.body
         )}
 
-      <div className="absolute top-10 left-10 w-72 h-72 bg-orange-300/20 rounded-full blur-3xl" />
-
-      <div className="absolute bottom-10 right-10 w-72 h-72 bg-red-300/20 rounded-full blur-3xl" />
+      <div className="pointer-events-none absolute top-10 left-10 w-72 h-72 bg-orange-200/30 rounded-full blur-3xl" />
+      <div className="pointer-events-none absolute bottom-10 right-10 w-72 h-72 bg-red-200/20 rounded-full blur-3xl" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* HEADER */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10 sm:mb-12">
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 dark:bg-slate-800/70 shadow text-orange-700 dark:text-orange-300 font-semibold mb-5">
-            <Flame size={18} />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100 text-orange-700 text-xs font-bold tracking-widest uppercase mb-4">
+            <Flame size={14} />
             Popular Indian Dishes
           </div>
 
-          <h2 className="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-4">
+          <h2 className="menu-font-display text-3xl sm:text-5xl text-[#2A1810] mb-3">
             Our{" "}
             <span className="bg-gradient-to-r from-orange-600 to-red-500 bg-clip-text text-transparent">
               Indian Menu
             </span>
           </h2>
 
-          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300">
+          <p className="text-[#7A6A5E] text-base sm:text-lg">
             Taste the authentic flavors of India 🇮🇳
           </p>
 
         </div>
 
         {/* SEARCH BAR */}
-        <div className="max-w-xl mx-auto mb-10">
+        <div className="max-w-xl mx-auto mb-10 sm:mb-12">
           <div className="relative">
             <Search
               size={20}
@@ -588,32 +593,32 @@ export default function MenuSection({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search for dishes..."
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-orange-100 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-orange-400 shadow-md"
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-orange-100 bg-white text-[#2A1810] placeholder:text-[#9A8A7E] outline-none focus:ring-2 focus:ring-orange-300 shadow-sm transition"
             />
           </div>
         </div>
 
         {/* CATEGORIES — circular tiles, Domino's style */}
         {search.trim().length === 0 && (
-          <div className="mb-10">
+          <div className="mb-10 sm:mb-12">
 
-            <p className="text-center text-gray-500 dark:text-gray-400 font-semibold mb-5">
+            <p className="text-center text-[#9A8A7E] font-semibold mb-6">
               What are you craving for?
             </p>
 
-            <div className="flex justify-center flex-wrap gap-6 sm:gap-8">
+            <div className="flex justify-center flex-wrap gap-6 sm:gap-10">
 
               {categories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => setActiveCategory(category.id)}
-                  className="flex flex-col items-center gap-2 group"
+                  className="flex flex-col items-center gap-2.5 group"
                 >
                   <div
-                    className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden shadow-lg transition-all duration-300 ${
+                    className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden transition-all duration-300 ${
                       activeCategory === category.id
-                        ? "ring-4 ring-orange-500 scale-105"
-                        : "ring-2 ring-white dark:ring-slate-800 group-hover:scale-105"
+                        ? "ring-4 ring-orange-500 shadow-lg shadow-orange-200 scale-105"
+                        : "ring-2 ring-white shadow-md group-hover:scale-105 group-hover:shadow-orange-200/60"
                     }`}
                   >
                     <img
@@ -624,10 +629,10 @@ export default function MenuSection({
                   </div>
 
                   <span
-                    className={`text-sm font-bold ${
+                    className={`menu-font-display text-sm sm:text-base ${
                       activeCategory === category.id
                         ? "text-orange-600"
-                        : "text-gray-700 dark:text-gray-300"
+                        : "text-[#5C4A3D]"
                     }`}
                   >
                     {category.name}
@@ -645,10 +650,10 @@ export default function MenuSection({
           /* =====================================================
              SEARCH RESULTS — Full Menu ke poore catalog se
           ===================================================== */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7">
 
             {searchResults.length === 0 && (
-              <p className="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">
+              <p className="col-span-full text-center text-[#9A8A7E] py-10">
                 No dishes matched "{search}".
               </p>
             )}
@@ -663,11 +668,11 @@ export default function MenuSection({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") openSearchItemDetail(item);
                 }}
-                className="group glass-card hover-lift rounded-3xl overflow-hidden cursor-pointer"
+                className="group bg-white rounded-3xl overflow-hidden border border-orange-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
               >
 
                 {/* IMAGE */}
-                <div className="relative h-52 overflow-hidden">
+                <div className="relative h-48 sm:h-52 overflow-hidden">
 
                   <img
                     src={item.image}
@@ -676,7 +681,7 @@ export default function MenuSection({
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
 
-                  <div className="absolute top-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow">
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow">
                     {item.category}
                   </div>
 
@@ -698,7 +703,7 @@ export default function MenuSection({
                         ? `Remove ${item.name} from favorites`
                         : `Add ${item.name} to favorites`
                     }
-                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 dark:bg-slate-900/90 flex items-center justify-center shadow hover:scale-110 transition"
+                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow hover:scale-110 transition"
                   >
                     <Heart
                       size={18}
@@ -717,16 +722,16 @@ export default function MenuSection({
                 <div className="p-5">
 
                   <div className="flex items-start justify-between gap-3 mb-2">
-                    <h3 className="text-xl font-extrabold text-gray-900 dark:text-white">
+                    <h3 className="menu-font-display text-lg sm:text-xl text-[#2A1810]">
                       {item.name}
                     </h3>
 
-                    <span className="text-xl font-extrabold text-orange-600">
+                    <span className="font-extrabold text-orange-600 whitespace-nowrap">
                       ₹{item.price}
                     </span>
                   </div>
 
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-5 min-h-[40px] line-clamp-2">
+                  <p className="text-sm text-[#7A6A5E] mb-5 min-h-[40px] line-clamp-2">
                     {item.description}
                   </p>
 
@@ -741,7 +746,7 @@ export default function MenuSection({
                           e.stopPropagation();
                           addSearchItemToCart(item);
                         }}
-                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-1 transition-all"
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-0.5 transition-all"
                       >
                         <ShoppingCart size={18} />
                         Add
@@ -749,7 +754,7 @@ export default function MenuSection({
 
                     ) : (
 
-                      <div className="w-full flex items-center justify-between rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-100 dark:border-slate-700 overflow-hidden">
+                      <div className="w-full flex items-center justify-between rounded-2xl bg-orange-50 border border-orange-100 overflow-hidden">
 
                         <button
                           type="button"
@@ -758,12 +763,12 @@ export default function MenuSection({
                             decreaseSearchItemQuantity(item.id);
                           }}
                           aria-label={`Decrease quantity of ${item.name}`}
-                          className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
+                          className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 transition"
                         >
                           <Minus size={16} />
                         </button>
 
-                        <span className="font-bold text-gray-900 dark:text-white">
+                        <span className="font-bold text-[#2A1810]">
                           {getSearchItemCartQuantity(item.id)}
                         </span>
 
@@ -774,7 +779,7 @@ export default function MenuSection({
                             increaseSearchItemQuantity(item);
                           }}
                           aria-label={`Increase quantity of ${item.name}`}
-                          className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
+                          className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 transition"
                         >
                           <Plus size={16} />
                         </button>
@@ -798,10 +803,10 @@ export default function MenuSection({
           /* =====================================================
              ACTIVE CATEGORY (default browse view)
           ===================================================== */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7">
 
           {displayedItems.length === 0 && (
-            <p className="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">
+            <p className="col-span-full text-center text-[#9A8A7E] py-10">
               No dishes matched "{search}".
             </p>
           )}
@@ -816,11 +821,11 @@ export default function MenuSection({
               onKeyDown={(e) => {
                 if (e.key === "Enter") openFoodDetail(item);
               }}
-              className="group glass-card hover-lift rounded-3xl overflow-hidden cursor-pointer"
+              className="group bg-white rounded-3xl overflow-hidden border border-orange-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
             >
 
               {/* IMAGE */}
-              <div className="relative h-52 overflow-hidden">
+              <div className="relative h-48 sm:h-52 overflow-hidden">
 
                 <img
                   src={item.image}
@@ -829,7 +834,7 @@ export default function MenuSection({
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
 
-                <div className="absolute top-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow">
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow">
                   {item.tag}
                 </div>
 
@@ -843,7 +848,7 @@ export default function MenuSection({
                       ? `Remove ${item.name} from favorites`
                       : `Add ${item.name} to favorites`
                   }
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 dark:bg-slate-900/90 flex items-center justify-center shadow hover:scale-110 transition"
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow hover:scale-110 transition"
                 >
                   <Heart
                     size={18}
@@ -863,26 +868,26 @@ export default function MenuSection({
 
                 <div className="flex items-start justify-between gap-3 mb-2">
 
-                  <h3 className="text-xl font-extrabold text-gray-900 dark:text-white">
+                  <h3 className="menu-font-display text-lg sm:text-xl text-[#2A1810]">
                     {item.name}
                   </h3>
 
-                  <span className="text-xl font-extrabold text-orange-600">
+                  <span className="font-extrabold text-orange-600 whitespace-nowrap">
                     ₹{item.price}
                   </span>
 
                 </div>
 
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 min-h-[40px]">
+                <p className="text-sm text-[#7A6A5E] mb-4 min-h-[40px]">
                   {item.description}
                 </p>
 
                 <div className="flex items-center justify-between mb-5">
 
-                  <div className="flex items-center gap-1 text-yellow-500 font-bold">
+                  <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
                     <Star
-                      size={17}
-                      className="fill-yellow-500"
+                      size={16}
+                      className="fill-amber-500"
                     />
                     {item.rating}
                   </div>
@@ -904,7 +909,7 @@ export default function MenuSection({
                         e.stopPropagation();
                         handleAddClick(item);
                       }}
-                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-1 transition-all"
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-500 text-white py-3 rounded-2xl font-bold shadow-lg hover:shadow-orange-300/50 hover:-translate-y-0.5 transition-all"
                     >
                       <ShoppingCart size={18} />
                       Add
@@ -912,7 +917,7 @@ export default function MenuSection({
 
                   ) : (
 
-                    <div className="w-full flex items-center justify-between rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-100 dark:border-slate-700 overflow-hidden">
+                    <div className="w-full flex items-center justify-between rounded-2xl bg-orange-50 border border-orange-100 overflow-hidden">
 
                       <button
                         type="button"
@@ -921,12 +926,12 @@ export default function MenuSection({
                           decreaseCartQuantity(item.id);
                         }}
                         aria-label={`Decrease quantity of ${item.name}`}
-                        className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
+                        className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 transition"
                       >
                         <Minus size={16} />
                       </button>
 
-                      <span className="font-bold text-gray-900 dark:text-white">
+                      <span className="font-bold text-[#2A1810]">
                         {getCartQuantity(item.id)}
                       </span>
 
@@ -937,7 +942,7 @@ export default function MenuSection({
                           increaseCartQuantity(item);
                         }}
                         aria-label={`Increase quantity of ${item.name}`}
-                        className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 dark:hover:bg-slate-700 transition"
+                        className="w-12 h-12 flex items-center justify-center text-orange-600 hover:bg-orange-100 transition"
                       >
                         <Plus size={16} />
                       </button>
@@ -965,9 +970,10 @@ export default function MenuSection({
             onClick={() =>
               (window.location.href = "/fullmenu")
             }
-            className="px-8 py-4 rounded-2xl bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-300 font-bold shadow-xl hover:-translate-y-1 transition"
+            className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-full border-2 border-orange-200 bg-white text-orange-700 font-bold shadow-sm hover:bg-orange-50 hover:shadow-md transition-all"
           >
             View Full Menu
+            <ArrowRight size={16} className="group-hover:translate-x-1 transition" />
           </button>
 
         </div>
