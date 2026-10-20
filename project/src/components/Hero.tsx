@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // =========================================================
@@ -27,10 +27,6 @@ export default function Hero() {
     }, 5000);
     return () => clearInterval(timer);
   }, []);
-
-  const scrollToStory = () => {
-    document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
-  };
 
   return (
     <section
@@ -91,10 +87,11 @@ export default function Hero() {
           </button>
 
           <button
-            onClick={scrollToStory}
-            className="px-7 py-3.5 bg-transparent text-white rounded-full font-bold border-2 border-white/40 hover:bg-white/10 hover:border-white transition-all"
+            onClick={() => navigate("/reservation")}
+            className="group px-7 py-3.5 bg-transparent text-white rounded-full font-bold border-2 border-white/40 hover:bg-white/10 hover:border-white transition-all flex items-center gap-2"
           >
-            Our Story
+            <CalendarCheck size={18} />
+            Book a Table
           </button>
         </div>
 
