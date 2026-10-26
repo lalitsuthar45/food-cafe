@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import {
+  QrCode,
+  AtSign,
+  Info,
   Minus,
   Plus,
   Trash2,
@@ -43,6 +47,23 @@ type CartPageProps = {
 
 type PaymentMethod = "COD" | "UPI" | "CARD";
 
+// =========================================================
+// UPI QR CONFIG
+// Customer apne phone ke kisi bhi UPI app (GPay / PhonePe /
+// Paytm / BHIM ...) se ye QR scan karta hai, aur bill amount
+// apne-aap pre-filled aa jata hai.
+//
+//  >>> APNA UPI ID YAHAN DAALEIN (jispe payment receive karni hai) <<<
+//  Example: "savoryhaven@okaxis"
+//
+// Jab tak ye khaali hai, QR nahi dikhega — taaki galti se
+// payment kisi aur ko na chali jaye.
+// =========================================================
+const MERCHANT_UPI_ID = "8306062459@ybl";
+const MERCHANT_NAME = "Savory Haven";
+
+const UPI_ID_PATTERN = /^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}$/;
+
 function CartPage({ cartItems, setCartItems }: CartPageProps) {
   const navigate = useNavigate();
   const toast = useToast();
@@ -63,6 +84,12 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
     useState<PaymentMethod>("COD");
 
   const [upiId, setUpiId] = useState("");
+
+  // UPI: "qr" = scan & pay (default), "id" = type your own UPI ID
+  const [upiMode, setUpiMode] = useState<"qr" | "id">("qr");
+  const [upiPaid, setUpiPaid] = useState(false);
+  const [utr, setUtr] = useState("");
+  const [copiedUpi, setCopiedUpi] = useState(false);
 
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
@@ -101,6 +128,33 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
 
   const grandTotal =
     itemsTotal + gst + deliveryCharge - discount;
+
+  // =========================
+  // UPI QR
+  // "upi://pay" deep link — QR mein yahi link encode hota hai.
+  // Isse scan karte hi UPI app mein payee + bill amount
+  // pre-filled aa jaate hain. Mobile pe isi link se seedha
+  // UPI app bhi khul jata hai.
+  // =========================
+
+  const upiConfigured = UPI_ID_PATTERN.test(MERCHANT_UPI_ID);
+
+  const upiLink =
+    upiConfigured && grandTotal > 0
+      ? `upi://pay?pa=${MERCHANT_UPI_ID}` +
+        `&pn=${encodeURIComponent(MERCHANT_NAME)}` +
+        `&am=${grandTotal.toFixed(2)}` +
+        `&cu=INR` +
+        `&tn=${encodeURIComponent(`${MERCHANT_NAME} Order`)}`
+      : "";
+
+  const isQrPay = paymentMethod === "UPI" && upiMode === "qr";
+
+  // Bill amount badalne par (cart change) purani "I have paid"
+  // confirmation galat ho jaati hai — isliye reset kar dete hain.
+  useEffect(() => {
+    setUpiPaid(false);
+  }, [grandTotal]);
 
   // =========================
   // API URL
@@ -208,7 +262,18 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
   // =========================
 
   const isValidUpi = (value: string) => {
-    return /^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}$/.test(value);
+    return UPI_ID_PATTERN.test(value);
+  };
+
+  const copyMerchantUpi = async () => {
+    try {
+      await navigator.clipboard.writeText(MERCHANT_UPI_ID);
+      setCopiedUpi(true);
+      toast.success("UPI ID copied!");
+      setTimeout(() => setCopiedUpi(false), 2000);
+    } catch {
+      toast.warning("Could not copy. Please copy the UPI ID manually.");
+    }
   };
 
   // =========================
@@ -287,6 +352,30 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
     }
 
     if (paymentMethod === "UPI") {
+      // Scan & Pay: customer ne QR/UPI app se payment kar di hai
+      if (upiMode === "qr") {
+        if (!upiConfigured) {
+          toast.error(
+            "UPI QR is unavailable right now. Please choose another payment method."
+          );
+          return false;
+        }
+
+        if (!upiPaid) {
+          toast.warning(
+            "Please complete the payment and tick “I have completed the payment”"
+          );
+          return false;
+        }
+
+        if (utr && !/^\d{12}$/.test(utr)) {
+          toast.warning("UPI reference (UTR) must be 12 digits");
+          return false;
+        }
+
+        return true;
+      }
+
       if (!upiId) {
         toast.warning("Please enter UPI ID");
         return false;
@@ -392,7 +481,11 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
         paymentMethod === "COD"
           ? "Cash on Delivery"
           : paymentMethod === "UPI"
-          ? `UPI - ${upiId}`
+          ? upiMode === "qr"
+            ? utr
+              ? `UPI QR - UTR ${utr}`
+              : "UPI QR - Paid (unverified)"
+            : `UPI - ${upiId}`
           : `Card - ****${cleanCardNumber.slice(-4)}`,
 
       items_total: itemsTotal,
@@ -454,6 +547,9 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
       setGeneratedOtp("");
       setOtpVerified(false);
       setUpiId("");
+      setUpiMode("qr");
+      setUpiPaid(false);
+      setUtr("");
       setCardNumber("");
       setCardHolder("");
       setExpiry("");
@@ -473,7 +569,7 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
     icon: typeof Banknote;
   }[] = [
     { id: "COD", label: "Cash on Delivery", sub: "Pay when it arrives", icon: Banknote },
-    { id: "UPI", label: "UPI Payment", sub: "GPay, PhonePe, Paytm", icon: Smartphone },
+    { id: "UPI", label: "UPI Payment", sub: "Scan QR · GPay, PhonePe", icon: Smartphone },
     { id: "CARD", label: "Card", sub: "Debit / Credit", icon: CreditCard },
   ];
 
@@ -1035,23 +1131,180 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                 {/* UPI */}
 
                 {paymentMethod === "UPI" && (
-                  <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl p-5">
+                  <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl p-4 sm:p-5">
 
-                    <h4 className="font-bold text-green-700 mb-3">
-                      Enter UPI ID
-                    </h4>
+                    {/* Scan & Pay / Enter UPI ID toggle */}
+                    <div className="grid grid-cols-2 gap-1 p-1 bg-white border border-green-200 rounded-xl mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setUpiMode("qr")}
+                        className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition ${
+                          upiMode === "qr"
+                            ? "bg-green-600 text-white shadow"
+                            : "text-green-700 hover:bg-green-50"
+                        }`}
+                      >
+                        <QrCode size={16} />
+                        Scan &amp; Pay
+                      </button>
 
-                    <input
-                      type="text"
-                      placeholder="example@okaxis"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
-                      className="w-full border border-green-200 bg-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-400 transition"
-                    />
+                      <button
+                        type="button"
+                        onClick={() => setUpiMode("id")}
+                        className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition ${
+                          upiMode === "id"
+                            ? "bg-green-600 text-white shadow"
+                            : "text-green-700 hover:bg-green-50"
+                        }`}
+                      >
+                        <AtSign size={16} />
+                        Enter UPI ID
+                      </button>
+                    </div>
 
-                    <p className="text-xs text-green-700/70 mt-2">
-                      Example: lalit@okaxis, abc@ybl, user@ibl
-                    </p>
+                    {upiMode === "qr" ? (
+                      upiConfigured && upiLink ? (
+                        <div>
+
+                          {/* Phone / tablet: scan karne ke bajay seedha UPI app kholo */}
+                          <a
+                            href={upiLink}
+                            className="lg:hidden flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700 active:scale-[0.99] text-white py-3.5 rounded-xl font-bold shadow-md transition"
+                          >
+                            <Smartphone size={18} />
+                            Pay ₹{grandTotal} with UPI App
+                          </a>
+                          <p className="lg:hidden text-center text-xs text-green-700/70 mt-2 mb-4">
+                            Opens GPay, PhonePe, Paytm or any UPI app on this phone
+                          </p>
+
+                          <div className="flex flex-col sm:flex-row items-center gap-5">
+
+                            {/* QR code */}
+                            <div className="flex flex-col items-center shrink-0">
+                              <div className="bg-white p-3 rounded-2xl border border-green-200 shadow-sm">
+                                <QRCodeSVG
+                                  value={upiLink}
+                                  size={176}
+                                  level="M"
+                                  marginSize={1}
+                                  bgColor="#FFFFFF"
+                                  fgColor="#000000"
+                                  title={`Pay ₹${grandTotal} to ${MERCHANT_NAME}`}
+                                />
+                              </div>
+                              <p className="lg:hidden text-[11px] text-green-700/70 mt-2">
+                                or scan from another device
+                              </p>
+                            </div>
+
+                            {/* Amount + instructions */}
+                            <div className="text-center sm:text-left min-w-0">
+                              <p className="text-xs uppercase tracking-wide text-green-700/70 font-bold">
+                                Amount to pay
+                              </p>
+                              <p className="text-3xl font-extrabold text-[#2A1810]">
+                                ₹{grandTotal}
+                              </p>
+
+                              <p className="text-sm text-[#5C4A3D] mt-2 leading-relaxed">
+                                Scan this QR with <b>any UPI app</b> — GPay,
+                                PhonePe, Paytm, BHIM — the bill amount fills
+                                in automatically.
+                              </p>
+
+                              <div className="mt-3 inline-flex items-center gap-2 bg-white border border-green-200 rounded-lg px-3 py-1.5 text-sm max-w-full">
+                                <span className="truncate font-semibold text-[#2A1810]">
+                                  {MERCHANT_UPI_ID}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={copyMerchantUpi}
+                                  aria-label="Copy UPI ID"
+                                  className="text-green-700 hover:text-green-900 shrink-0"
+                                >
+                                  {copiedUpi ? (
+                                    <Check size={15} />
+                                  ) : (
+                                    <Copy size={15} />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+
+                          </div>
+
+                          {/* Payment ke baad confirmation */}
+                          <label className="mt-5 flex items-start gap-3 bg-white border border-green-200 rounded-xl p-3.5 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={upiPaid}
+                              onChange={(e) => setUpiPaid(e.target.checked)}
+                              className="mt-0.5 w-4 h-4 accent-green-600 shrink-0"
+                            />
+                            <span className="text-sm text-[#2A1810]">
+                              I have completed the payment of{" "}
+                              <b>₹{grandTotal}</b>
+                            </span>
+                          </label>
+
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={12}
+                            autoComplete="off"
+                            placeholder="UTR / reference no. (optional)"
+                            value={utr}
+                            onChange={(e) =>
+                              setUtr(e.target.value.replace(/\D/g, ""))
+                            }
+                            className="mt-3 w-full border border-green-200 bg-white p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-400 transition"
+                          />
+
+                          <p className="flex items-start gap-1.5 text-xs text-green-700/70 mt-2">
+                            <Info size={13} className="mt-0.5 shrink-0" />
+                            Your order is confirmed once we verify the payment.
+                          </p>
+
+                        </div>
+                      ) : (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+                          <p className="font-semibold">
+                            UPI QR is unavailable right now.
+                          </p>
+                          <p className="mt-1">
+                            Please use “Enter UPI ID” or choose another payment
+                            method.
+                          </p>
+
+                          {/* Sirf local dev (npm run dev) mein dikhta hai */}
+                          {import.meta.env.DEV && (
+                            <p className="mt-2 text-xs text-amber-700/80">
+                              Dev note: set <code>MERCHANT_UPI_ID</code> at the
+                              top of CartPage.tsx to enable the QR code.
+                            </p>
+                          )}
+                        </div>
+                      )
+                    ) : (
+                      <div>
+                        <h4 className="font-bold text-green-700 mb-3">
+                          Enter UPI ID
+                        </h4>
+
+                        <input
+                          type="text"
+                          placeholder="example@okaxis"
+                          value={upiId}
+                          onChange={(e) => setUpiId(e.target.value)}
+                          className="w-full border border-green-200 bg-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-400 transition"
+                        />
+
+                        <p className="text-xs text-green-700/70 mt-2">
+                          Example: lalit@okaxis, abc@ybl, user@ibl
+                        </p>
+                      </div>
+                    )}
 
                   </div>
                 )}
@@ -1141,6 +1394,8 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                     ? "Processing..."
                     : paymentMethod === "COD"
                     ? `Place Order — ₹${grandTotal}`
+                    : isQrPay
+                    ? `Confirm Order — ₹${grandTotal}`
                     : `Pay ₹${grandTotal}`}
                 </button>
 
@@ -1178,6 +1433,8 @@ function CartPage({ cartItems, setCartItems }: CartPageProps) {
                 ? "Processing..."
                 : paymentMethod === "COD"
                 ? "Place Order"
+                : isQrPay
+                ? "Confirm Order"
                 : "Pay Now"}
             </button>
           </div>
